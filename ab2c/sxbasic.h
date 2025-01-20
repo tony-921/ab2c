@@ -53,7 +53,8 @@ typedef struct	lbltbl {
 
 /* Regular Statements Definition Table */
 typedef struct defstatement {
-	char	*name;
+	char	*b_name;		/* keyword in basic */
+	char	*c_name;		/* nale in c language */
 	int		numParams;
 	SCLASS	retClass;		/* return type (reserve) */
 	SCLASS	param1;
@@ -62,9 +63,14 @@ typedef struct defstatement {
 	SCLASS	param4;
 } DEF_STATEMENT;
 
-#define STATEMENT0(NAME)	{ NAME, 0, SC_NONE, SC_NONE, SC_NONE, SC_NONE, SC_NONE }
-#define STATEMENT1(NAME, P1)		{ NAME, 1, SC_NONE, P1, SC_NONE,SC_NONE, SC_NONE }
-#define STATEMENT2(NAME, P1, P2)	{ NAME, 2, SC_NONE, P1, P2, SC_NONE, SC_NONE }
+#define DEF_FUNC0(BNAME, CNAME, R)			{ BNAME, CNAME, 0, R, SC_NONE, SC_NONE, SC_NONE, SC_NONE }
+#define DEF_FUNC1(BNAME, CNAME, R, P1)		{ BNAME, CNAME, 1, R, P1, SC_NONE,SC_NONE, SC_NONE }
+#define DEF_FUNC2(BNAME, CNAME, R, P1, P2)	{ BNAME, CNAME, 2, R, P1, P2, SC_NONE, SC_NONE }
+#define DEF_FUNC3(BNAME, CNAME, R, P1, P2, P3)	{ BNAME, CNAME, 3, R, P1, P2, P3, SC_NONE }
+
+#define STATEMENT0(BNAME, CNAME)			{ BNAME, CNAME, 0, SC_NONE, SC_NONE, SC_NONE, SC_NONE, SC_NONE }
+#define STATEMENT1(BNAME, CNAME, P1)		{ BNAME, CNAME, 1, SC_NONE, P1, SC_NONE,SC_NONE, SC_NONE }
+#define STATEMENT2(BNAME, CNAME, P1, P2)	{ BNAME, CNAME, 2, SC_NONE, P1, P2, SC_NONE, SC_NONE }
 
 
 #define	GLOBAL_TABLE_SIZE	100
@@ -161,7 +167,7 @@ void	SubArrayStr(int, SYMTBL*);
 int		parseFunction(void);
 
 void	DoParam(FNCTBL*);
-void	PutClass(SCLASS);
+void	PrintType(SCLASS);
 // FIXME void	AjustParam(void);
 void	doLabel(void);
 void	GetString(char*);
@@ -195,9 +201,6 @@ int		stateT(void);
 int		stateU(void);
 int		stateV(void);
 int		stateW(void);
-int		stateX(void);
-int		stateY(void);
-int		stateZ(void);
 
 /*	 TABLE.C	 */
 void	InitTable(void);
@@ -218,26 +221,19 @@ LBLTBL* DefLabel(char*);
 LBLTBL* SearchUndefLabel(void);
 void	Pass1(void);
 void	Pass2(void);
-void	PrintPredec(void);
+char* TypeToStr(SCLASS type);
+void	PrintFunctionPrototype(void);
 void	PredecFunc(void);
 void	SkipLineNumber(void);
 
 /*	EFUNC.C		*/
 int		efuncs(void);
-int		funcA(void);
-int		funcB(void);
-int		funcC(void);
 int		funcD(void);
 int		funcE(void);
 int		funcF(void);
-int		funcG(void);
-int		funcH(void);
 int		funcI(void);
-int		funcJ(void);
-int		funcK(void);
 int		funcL(void);
 int		funcM(void);
-int		funcN(void);
 int		funcO(void);
 int		funcP(void);
 int		funcQ(void);
@@ -246,12 +242,7 @@ int		funcS(void);
 int		funcT(void);
 int		funcU(void);
 int		funcV(void);
-int		funcW(void);
-int		funcX(void);
-int		funcY(void);
-int		funcZ(void);
 
-void	DoVarhdl(void);
 void	doEcvt(void);
 void	doTransStr(int);
 void	doTransStrFunc(int);
@@ -264,5 +255,5 @@ void	state1(SCLASS, SCLASS);
 void	state2(SCLASS, SCLASS, SCLASS);
 void	state3(SCLASS, SCLASS, SCLASS, SCLASS);
 void	doFread(void);
-void	doScale(int);
-void	DoFreads(void);
+int		ParseRegularFunctions(void);
+int		ParseSpecialFunctions(void);

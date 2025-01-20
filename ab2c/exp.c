@@ -98,15 +98,14 @@ check(char* s)
 		PutErrorE(buf);
 	}
 }
+
 void
 fcheck(char* s)
 {
 	char	buf[50];
 
 	if (!amatch(s)) {
-		sprintf(buf, "%sÇ™Ç†ÇËÇ‹ÇπÇÒ", s);
-		PutError(buf);
-		sprintf(buf, "Misisng %s", s);
+		sprintf(buf, "Misisng Keyword : %s", s);
 		PutErrorE(buf);
 	}
 	PutCode(s);
@@ -358,6 +357,7 @@ ToFloat1(SCLASS class)
 	if (class == SC_STR)
 		PutError("ïœêîÇÃå^Ç™à·Ç¢Ç‹Ç∑");
 }
+
 void
 ToFloat2(SCLASS class1, SCLASS class2)
 {

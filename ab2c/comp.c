@@ -60,13 +60,11 @@ Compile(void)
 
 	if (isFirstFunc) {	/* 関数が一つもなかった時 */
 		if (p = SearchUndefLabel()) {
-			PutError("未宣言のラベルです");
 			PutErrorE("Undefined label");
 		}
 		PutCode("\n};");
 	}
 	if (inFunction) {
-		PutError("関数の途中でプログラムが終っています");
 		PutErrorE("Incomplete function");
 	}
 	return(TRUE);
@@ -84,7 +82,7 @@ CompInit(void)
 	printf("pass 1\n");
 	Pass1();		/* Parse code to generate function table, labels (withoug generating code) */
 	printf("pass 2\n");
-	// Pass2();		/* put code to arrange items */
+	// Pass2();		/* FIXME - put code to arrange items */
 
 	rewind(inputFp);
 
@@ -134,7 +132,7 @@ parseStatement(void)
 	int		ret = FALSE;
 
 	SkipSpace();
-	ret = func_external();
+	ret = state_external();
 	if (ret) return TRUE;
 
 	switch (*TokenPtr) {
@@ -206,15 +204,6 @@ parseStatement(void)
 		break;
 	case 'w':
 		ret = stateW();
-		break;
-	case 'x':
-		ret = stateX();
-		break;
-	case 'y':
-		ret = stateY();
-		break;
-	case 'z':
-		ret = stateZ();
 		break;
 	case '?':
 		TokenPtr++;
@@ -297,7 +286,6 @@ stateD(void)
 {
 	if (amatch("default")) 			doDefault();
 	else if (amatch("di()"));
-	else if (amatch("decross()"))	PutCode("EMDeCross();");
 	else
 		return(FALSE);
 
@@ -313,7 +301,6 @@ stateE(void)
 	else if (amatch("endtask(")) state1(SC_INT, SC_INT);
 	else if (amatch("end"))		PutCode("_sxb_end();");
 	else if (amatch("ei()"));
-	else if (amatch("encross()")) 	PutCode("EMEnCross();");
 	else if (amatch("exit()")) {
 		PutCode("_sxb_exit(1);");
 	}
@@ -638,23 +625,6 @@ stateW(void)
 	return(TRUE);
 }
 
-int
-stateX(void)
-{
-	return(FALSE);
-}
-
-int
-stateY(void)
-{
-	return(FALSE);
-}
-
-int
-stateZ(void)
-{
-	return(FALSE);
-}
 
 
 /*
@@ -982,13 +952,11 @@ void
 doReturn(void)
 {
 	if (inFunction == FALSE) {
-		PutError("不正な位置にreturn文があります");
-		PutErrorE("\'return\' outside funciton");
+		PutError("\'return\' without a function");
 	}
 	if (endOfLine()) {
 		if (retClass != SC_VOID) {
-			PutError("戻り値がありません");
-			PutErrorE("Missing return value");
+			PutError("Missing a return value");
 		}
 		PutCode("return;\n");
 	}
@@ -1125,7 +1093,7 @@ GetConst(void)
 }
 
 /*
-** 配列変数の宣言
+** Declare varriable array
 */
 void
 DeclareArray(int isGlobal)
@@ -1163,6 +1131,9 @@ InitArray(int isGlobal, SCLASS class, SYMTBL* p)
 	p->class = class;
 	p->dim = 0;
 	p->size[0] = p->size[1] = p->size[2] = 0;
+
+	PutCode("%s %s", TypeToStr(p->class), p->name);
+
 	do {
 		p->size[p->dim] = GetConst();
 		PutCode("[%d]", p->size[p->dim] + 1);
@@ -1323,7 +1294,7 @@ parseFunction(void)
 	p->isDefined = TRUE;
 
 	retClass = p->retClass;
-	PutClass(p->retClass);
+	PrintType(p->retClass);
 	PutCode(p->name);
 	TokenPtr += TokenLen(TokenPtr);
 
@@ -1356,7 +1327,7 @@ DoParam(FNCTBL* f)
 		i = 0;
 		do {
 			if (!isalpha(*TokenPtr)) SynErr();
-			PutClass(f->parClass[i]);
+			PrintType(f->parClass[i]);
 			v = DefLocVar(TokenPtr);
 			v->class = SC_INT;
 			v->dim = 0;
@@ -1379,19 +1350,12 @@ DoParam(FNCTBL* f)
 }
 
 void
-PutClass(SCLASS s)
+PrintType(SCLASS t)
 {
-	switch (s) {
-	case SC_VOID:	PutCode("void ");	break;
-	case SC_CHAR:	PutCode("char ");	break;
-	case SC_INT:	PutCode("int ");	break;
-	case SC_FLOAT:PutCode("double ");	break;
-	case SC_STR:	PutCode("char *");	break;
-	default:
-		fprintf(stderr, "Internal Error - PutClass(%d) -\n", (int)s);
-		break;
-	}
+	char* s = TypeToStr(t);
+	PutCode("%s ", s);
 }
+
 /*
 ** ラベルの定義
 */
@@ -1406,99 +1370,6 @@ doLabel(void)
 
 	PutCode("%s:", p->name);
 }
-
-#ifdef FIXME
-/*
-** プロパティの設定
-*/
-void
-doProp(void)
-{
-	bool	isarray = FALSE;
-	char	itemname[100];
-	char	propname[100];
-
-	GetString(itemname);	/* Get Item Name */
-	if (amatch("[")) {
-		expression();
-		ToInt1(lastClass);
-		isarray = TRUE;
-		check("]");
-	}
-	check(".");
-	if (amatch("delete"));
-	else if (amatch("active"))
-		PutPropSet("_sxb_item_active", itemname, isarray, "", 0);
-	else if (amatch("move")) {
-		PutPropSet("_sxb_item4", itemname, isarray, "move", 4);
-	}
-	else if (amatch("line")) {
-		PutPropSet("_sxb_item4", itemname, isarray, "line", 4);
-	}
-	else if (amatch("fill")) {
-		PutPropSet("_sxb_item4", itemname, isarray, "fill", 4);
-	}
-	else if (amatch("box")) {
-		PutPropSet("_sxb_item4", itemname, isarray, "box", 4);
-	}
-	else if (amatch("circle")) {
-		PutPropSet("_sxb_item3", itemname, isarray, "circle", 3);
-	}
-	else if (amatch("new")) {
-		PutPropSet("_sxb_item5", itemname, isarray, "new", 5);
-	}
-	else {
-		GetString(propname);	/* プロパティ名の転送 */
-		check("=");
-		expression();
-		if (lastClass == SC_STR) {
-			PutPropSet2("_sxb_prop_setS", itemname, isarray, propname);
-		}
-		else if (lastClass == SC_FLOAT) {
-			PutPropSet2("_sxb_prop_setF", itemname, isarray, propname);
-		}
-		else {
-			PutPropSet2("_sxb_prop_set", itemname, isarray, propname);
-		}
-	}
-}
-
-void
-PutPropSet(char* state, char* itemname, bool isarray, char* propname, int exps)
-{
-	if (exps > 0)	check("=");
-
-	if (isarray) {
-		PutCode("%s(\"%s\",1,%s,\"%s\"",
-			state, itemname, strpop(), propname);
-	}
-	else {
-		PutCode("%s(\"%s\",0,0,\"%s\"",
-			state, itemname, propname);
-	}
-	while (exps-- > 0) {
-		expression();
-		PutCode(", %s", strpop());
-		if (exps > 0)	check(",");
-	}
-	PutCode(")");
-};
-
-void
-PutPropSet2(char* state, char* itemname, bool isarray, char* propname)
-{
-	char* p = strpop();
-
-	if (isarray) {
-		PutCode("%s(\"%s\",1,%s,\"%s\", %s)",
-			state, itemname, strpop(), propname, p);
-	}
-	else {
-		PutCode("%s(\"%s\",0,0,\"%s\", %s)",
-			state, itemname, propname, p);
-	}
-};
-#endif
 
 void
 GetString(char* p)
@@ -1609,7 +1480,7 @@ doGoto(void)
 	TokenPtr += TokenLen(TokenPtr);
 }
 
-// A special sttement without parenthess and optional parameter
+// A special statement without parenthess and optional parameter
 void
 doLocate(void)
 {
@@ -1665,4 +1536,38 @@ pcall(void)
 	if (paraCnt < p->pars) PutError("引数が少なすぎます");
 
 	return(p);
+}
+
+// Music functions
+DEF_STATEMENT statementDefinitions[] = {
+	// music functions
+	STATEMENT2("m_alloc(", "m_alloc(", SC_INT, SC_INT),
+	STATEMENT2("m_assign(", "m_assign(", SC_INT, SC_INT),
+	STATEMENT0("m_cont(", "m_cont("),
+	STATEMENT0("m_init(", "m_init("),
+	STATEMENT0("m_play(", "m_play("),
+	STATEMENT0("m_stop(", "m_stop("),
+	STATEMENT1("m_sysch(", "m_sysch(", SC_STR),
+	STATEMENT2("m_trk(", "m_trk(", SC_INT, SC_STR),
+};
+
+int
+state_external(void) {
+	int	i;
+	int totalFunctions = sizeof(statementDefinitions) / sizeof(DEF_STATEMENT);
+	for (i = 0; i < totalFunctions; i++) {
+		DEF_STATEMENT* f = &statementDefinitions[i];
+		if (amatch(f->b_name)) {
+			strpush(f->c_name);
+			if (f->numParams == 0) {
+				state0(f->retClass);
+			}
+			if (f->numParams == 1) 		state1(f->retClass, f->param1);
+			if (f->numParams == 2) 		state2(f->retClass, f->param1, f->param2);
+			if (f->numParams == 3)		state3(f->retClass, f->param1, f->param2, f->param3);
+			if (f->numParams > 3)		PutError("Internal Error state_external %s %d", f->b_name, f->numParams);
+			return TRUE;
+		}
+	}
+	return FALSE;
 }

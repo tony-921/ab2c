@@ -1,7 +1,8 @@
 /*
-	I-BASIC	コンパイラ本体（組み込み関数）
+	SX-BASIC to C converter (Functions)
 	Programmed By ISHIGAMI Tatsuya
-	02/20/94
+	02/20/1994	First published
+	01/20/2025	Updated for Oh!X Reiwa anniversary.
 
 */
 
@@ -11,8 +12,6 @@
 #include	<setjmp.h>    
 
 #include	"sxbasic.h"
-
-// #define	STRN	0x5354524e
 
 extern	char* TokenPtr;
 extern	SCLASS	lastClass;
@@ -25,201 +24,31 @@ efuncs(void)
 
 	SkipSpace();
 
-	ret = func_external();
+	ret = ParseRegularFunctions();
 	if (ret) return TRUE;
 
-	switch (*TokenPtr) {
-	case 'a':
-		ret = funcA();
-		break;
-	case 'b':
-		ret = funcB();
-		break;
-	case 'c':
-		ret = funcC();
-		break;
-	case 'd':
-		ret = funcD();
-		break;
-	case 'e':
-		ret = funcE();
-		break;
-	case 'f':
-		ret = funcF();
-		break;
-	case 'g':
-		ret = funcG();
-		break;
-	case 'h':
-		ret = funcH();
-		break;
-	case 'i':
-		ret = funcI();
-		break;
-	case 'j':
-		ret = funcJ();
-		break;
-	case 'k':
-		ret = funcK();
-		break;
-	case 'l':
-		ret = funcL();
-		break;
-	case 'm':
-		ret = funcM();
-		break;
-	case 'n':
-		ret = funcN();
-		break;
-	case 'o':
-		ret = funcO();
-		break;
-	case 'p':
-		ret = funcP();
-		break;
-	case 'q':
-		ret = funcQ();
-		break;
-	case 'r':
-		ret = funcR();
-		break;
-	case 's':
-		ret = funcS();
-		break;
-	case 't':
-		ret = funcT();
-		break;
-	case 'u':
-		ret = funcU();
-		break;
-	case 'v':
-		ret = funcV();
-		break;
-	case 'w':
-		ret = funcW();
-		break;
-	case 'x':
-		ret = funcX();
-		break;
-	case 'y':
-		ret = funcY();
-		break;
-	case 'z':
-		ret = funcZ();
-		break;
-	}
+	ret = ParseSpecialFunctions();
 	return(ret);
 }
 
+
+/*
+ * Parse functions with special translation rules.
+ * 
+ */
 int
-funcA(void)
+ParseSpecialFunctions(void)
 {
-	if (pamatch("asc(")) 		func1(SC_INT, SC_STR);
-	else if (pamatch("atof("))	func1(SC_FLOAT, SC_STR);
-	else if (pamatch("atoi("))	func1(SC_INT, SC_STR);
-	else if (pamatch("abs(")) 	func1(SC_FLOAT, SC_FLOAT);
-	else if (pamatch("atan(")) 	func1(SC_FLOAT, SC_FLOAT);
-	else	return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcB(void)
-{
-	if (amatch("bin$(")) {
-		func1(SC_STR, SC_INT);
-		strpush("_sxb_bin(%s)", strpop());
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcC(void)
-{
-	if (amatch("chr$(")) {
-		strpush("_sxb_chrS(");
-		func1(SC_STR, SC_INT);
-	} else if (pamatch("cos(")) 	func1(SC_FLOAT, SC_FLOAT);
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcD(void)
-{
-	if (pamatch("dskf(")) {
-		func1(SC_INT, SC_CHAR);
-	} else if (amatch("date$")) {
+	if (amatch("date$")) {
 		strpush("dataS()");
 		lastClass = SC_STR;
 	} else if (amatch("day$")) {
 		strpush("dayS()");
 		lastClass = SC_STR;
-	} else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcE(void)
-{
-	if (pamatch("exp(")) 			func1(SC_FLOAT, SC_FLOAT);
-	else if (pamatch("ecvt(")) 	doEcvt();
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcF(void)
-{
-	if (pamatch("fix(")) {
-		func1(SC_FLOAT, SC_FLOAT);
-	}
-	else if (pamatch("fcvt(")) {
+	} else if (pamatch("ecvt(")) {
 		doEcvt();
-	}
-	else if (pamatch("fclose(")) {
-		func1(SC_INT, SC_INT);
-	}
-	else if (pamatch("fcloseall()")) {
-		func0(SC_INT);
-	}
-	else if (amatch("fdelete(")) {
-		strpush("TSDeleteP(");
-		func1(SC_INT, SC_STR);
-	}
-	else if (amatch("feof(")) {
-		strpush("_sxb_feof(");
-		func1(SC_INT, SC_INT);
-	}
-	else if (amatch("fgetc(")) {
-		strpush("_sxb_fgetc(");
-		func1(SC_INT, SC_INT);
-	}
-	else if (amatch("fopen(")) {
-		strpush("_sxb_fopen(");
-		func2(SC_INT, SC_STR, SC_STR);
-	}
-	else if (amatch("fputc(")) {
-		strpush("_sxb_fputc(");
-		func2(SC_INT, SC_CHAR, SC_INT);
-	}
-	else if (amatch("frename(")) {
-		strpush("_sxb_frename(");
-		func2(SC_INT, SC_STR, SC_STR);
-	}
-	else if (amatch("fseek(")) {
-		strpush("_sxb_fseek(");
-		func3(SC_INT, SC_INT, SC_INT, SC_INT);
+	} else if (pamatch("fcvt(")) {
+		doEcvt();
 	}
 	else if (amatch("fread(")) {
 		strpush("_sxb_fread(");
@@ -234,72 +63,6 @@ funcF(void)
 		doTransStr(1);
 		lastClass = SC_INT;
 	}
-	else if (amatch("fwrites(")) {
-		strpush("_sxb_fwrites(");
-		func2(SC_INT, SC_STR, SC_INT);
-	}
-	else if (pamatch("fock(")) {
-		func1(SC_STR, SC_INT);
-	}
-	else if (pamatch("findtskn(")) {
-		func2(SC_INT, SC_STR, SC_INT);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcG(void)
-{
-	if (pamatch("gcvt(")) {
-		func2(SC_STR, SC_FLOAT, SC_INT);
-	}
-	else if (pamatch("getmes()")) {
-		lastClass = SC_STR;
-	}
-	else if (amatch("getenv(")) {
-		strpush("_sxb_getenv(");
-		func2(SC_STR, SC_STR, SC_INT);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcH(void)
-{
-	if (amatch("hex$(")) {
-		strpush("_sxb_hex(");
-		func1(SC_STR, SC_INT);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcI(void)
-{
-	if (pamatch("int(")) 			func1(SC_INT, SC_FLOAT);
-	else if (pamatch("itoa("))	func1(SC_STR, SC_INT);
-	else if (pamatch("instr(")) 	func3(SC_INT, SC_STR, SC_STR, SC_INT);
-	else if (pamatch("isalnum(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("isalpha(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("isascii(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("iscntrl(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("isdigit(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("isgraph(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("islower(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("isprint(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("ispunct(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("isspace(")) func1(SC_INT, SC_CHAR);
-	else if (pamatch("isupper("))	func1(SC_INT, SC_CHAR);
-	else if (pamatch("isxdigit(")) func1(SC_INT, SC_CHAR);
 	else if (amatch("inkey$(0)")) {
 		strpush("_sxb_inkey0()");
 		lastClass = SC_STR;
@@ -308,288 +71,139 @@ funcI(void)
 		strpush("_sxb_inkey()");
 		lastClass = SC_STR;
 	}
-	else if (pamatch("iocs(")) {
-		func1(SC_INT, SC_INT);
-	}
-	else if (amatch("inputbox$(")) {
-		strpush("_sxb_inputboxS(");
-		func1(SC_STR, SC_STR);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcJ(void)
-{
-	return(FALSE);
-}
-
-int
-funcK(void)
-{
-	return(FALSE);
-}
-
-int
-funcL(void)
-{
-	if (pamatch("log(")) 			func1(SC_FLOAT, SC_FLOAT);
-	else if (amatch("len(")) {
-		strpush("strlen(");
-		func1(SC_INT, SC_STR);
-	}
-	else if (amatch("left$(")) {
-		strpush("_sxb_leftS(");
-		func2(SC_STR, SC_INT, SC_STR);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcM(void)
-{
-	if (amatch("mid$(")) {
-		strpush("_sxb_midS(");
-		func3(SC_STR, SC_INT, SC_INT, SC_STR);
-	}
-	else if (amatch("mirror$(")) {
-		strpush("_sxb_mirrorS(");
-		func1(SC_STR, SC_STR);
-	}
-	else if (amatch("mousex")) {
-		strpush("_sxb_mousex()");
-		lastClass = SC_INT;
-	}
-	else if (amatch("mousey")) {
-		strpush("_sxb_mousey()");
-		lastClass = SC_INT;
-	}
-	else if (amatch("mousel")) {
-		strpush("_sxb_mousel()");
-		lastClass = SC_INT;
-	}
-	else if (amatch("mouser")) {
-		strpush("_sxb_mouser()");
-		lastClass = SC_INT;
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcN(void)
-{
-	return(FALSE);
-}
-
-int
-funcO(void)
-{
-	if (amatch("oct$(")) {
-		strpush("_sxb_octS(");
-		func1(SC_STR, SC_INT);
-	}
-	else if (amatch("openres(")) {
-		strpush("_sxb_openres");
-		func1(SC_INT, SC_STR);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcP(void)
-{
-	if (pamatch("pi(")) {
+	else if (pamatch("pi(")) {
 		if (amatch(")")) {
 			sxb_strcat("1)");
 			lastClass = SC_FLOAT;
-		}
-		else
+		} else {
 			func1(SC_FLOAT, SC_FLOAT);
+		}
 	}
-	else if (pamatch("pow(")) {
-		func2(SC_FLOAT, SC_FLOAT, SC_FLOAT);
+	else if (pamatch("strlwr(")) {
+		doTransStrFunc(0); 
 	}
-	else if (pamatch("peek(")) {
-		func1(SC_INT, SC_INT);
-	}
-	else if (pamatch("peekw(")) {
-		func1(SC_INT, SC_INT);
-	}
-	else if (pamatch("peekl(")) {
-		func1(SC_INT, SC_INT);
-	}
-	else if (amatch("path$")) {
-		strpush("_sxb_pathS()");
-		lastClass = SC_STR;
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcQ(void)
-{
-	return(FALSE);
-}
-
-int
-funcR(void)
-{
-	if (pamatch("rand(")) 		func0(SC_INT);
-	else if (pamatch("rnd(")) 	func0(SC_FLOAT);
-	else if (amatch("right$(")) {
-		strpush("_sxb_rightS(");
-		func2(SC_STR, SC_INT, SC_STR);
-	}
-	else if (pamatch("ref_reg(")) func1(SC_INT, SC_INT);
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcS(void)
-{
-	if (amatch("str$(")) {
-		strpush("_sxb_str(");
-		func1(SC_STR, SC_FLOAT);
-	}
-	else if (pamatch("sgn(")) 	func1(SC_FLOAT, SC_FLOAT);
-	else if (pamatch("sin(")) 	func1(SC_FLOAT, SC_FLOAT);
-	else if (pamatch("sqr(")) 	func1(SC_FLOAT, SC_FLOAT);
-	else if (pamatch("space$("))	func1(SC_STR, SC_INT);
-	else if (pamatch("strchr("))	func2(SC_INT, SC_STR, SC_CHAR);
-	else if (pamatch("strcspn("))	func2(SC_INT, SC_STR, SC_STR);
-	else if (pamatch("string$("))	func2(SC_STR, SC_INT, SC_STR);
-	else if (pamatch("strlen(")) 	func1(SC_INT, SC_STR);
-	else if (pamatch("strrchr("))	func2(SC_INT, SC_STR, SC_CHAR);
-	else if (pamatch("strspn(")) 	func2(SC_INT, SC_STR, SC_STR);
-	else if (pamatch("strtok(")) 	func2(SC_STR, SC_STR, SC_STR);
-	else if (pamatch("strlwr("))		doTransStrFunc(0);
 	else if (pamatch("strnset("))	doTransStrFunc(2);
 	else if (pamatch("strrev(")) 	doTransStrFunc(0);
 	else if (pamatch("strset(")) 	doTransStrFunc(1);
 	else if (pamatch("strupr(")) 	doTransStrFunc(0);
-	else if (amatch("setenv(")) {
-		strpush("_sxb_setenv(");
-		func3(SC_STR, SC_INT, SC_STR, SC_INT);
-	}
-	else if (amatch("shiftkeybit")) {
-		strpush("_sxb_shiftkeybit()");
-		lastClass = SC_INT;
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcT(void)
-{
-	if (pamatch("toascii(")) 	func1(SC_INT, SC_INT);
-	else if (pamatch("tolower("))	func1(SC_INT, SC_INT);
-	else if (pamatch("toupper("))	func1(SC_INT, SC_INT);
-	else if (pamatch("tan(")) 	func1(SC_FLOAT, SC_FLOAT);
 	else if (amatch("time$")) {
 		strpush("timeS()");
 		lastClass = SC_STR;
-	}
-	else if (amatch("taskid")) {
-		strpush("taskid()");
-		lastClass = SC_INT;
-	}
-	else
+	} else
 		return(FALSE);
 
 	return(TRUE);
 }
 
-int
-funcU(void)
-{
-	return(FALSE);
-}
-
-int
-funcV(void)
-{
-	if (pamatch("val(")) 			func1(SC_FLOAT, SC_STR);
-	else if (pamatch("varhdl("))	DoVarhdl();
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-funcW(void)
-{
-	return(FALSE);
-}
-
-int
-funcX(void)
-{
-	return(FALSE);
-}
-
-int
-funcY(void)
-{
-	return(FALSE);
-}
-
-int
-funcZ(void)
-{
-	return(FALSE);
-}
 
 
-/* External functions */
 
-// Music functions
-DEF_STATEMENT statementDefinitions[] = {
-	STATEMENT2("m_alloc(", SC_INT, SC_INT),
-	STATEMENT2("m_assign(", SC_INT, SC_INT),
-	STATEMENT0("m_cont("),
-	STATEMENT0("m_init("),
-	STATEMENT0("m_play("),
-	STATEMENT0("m_stop("),
-	STATEMENT1("m_sysch(", SC_STR),
-	STATEMENT2("m_trk(", SC_INT, SC_STR),
+// regular functions
+DEF_STATEMENT funcDefinitions[] = {
+
+DEF_FUNC1("abs(", "abs(", SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("asc(", "asc(", SC_INT, SC_STR),
+DEF_FUNC1("atoi(", "atoi(", SC_INT, SC_STR),
+DEF_FUNC1("atof(", "atof(", SC_FLOAT, SC_STR),
+DEF_FUNC1("atan(", "atan(", SC_FLOAT, SC_FLOAT),
+
+DEF_FUNC1("bin$(", "_sxb_bin(", SC_STR, SC_INT),
+
+DEF_FUNC1("chr$(", "_sxb_chrS(", SC_STR, SC_INT),
+DEF_FUNC1("cos(",  "cos(",		SC_FLOAT, SC_FLOAT),
+
+DEF_FUNC1("dskf(",	"dskf(",	SC_INT, SC_CHAR),
+// DEF_FUNC0("date$",	"dateS()",	SC_STR),
+// DEF_FUNC0("days$",	"days()",	SC_STR),
+DEF_FUNC1("exp(",	"exp(",		SC_FLOAT, SC_FLOAT),
+
+DEF_FUNC1("fix(",	"fix(",	SC_FLOAT, SC_FLOAT),
+//		DEF_FUNC1("fcvt(")) doEcvt();
+DEF_FUNC1("fclose(", "fclose(", SC_INT, SC_INT),
+DEF_FUNC0("fcloseall(", "flocseall(", SC_INT),
+
+//	'fread', 'fwrie' and 'freads' have the designated functions
+DEF_FUNC1("fdelete(", "TSDeleteP(", SC_INT, SC_STR),
+DEF_FUNC1("feof(", "feof(", SC_INT, SC_INT),
+DEF_FUNC1("fgetc(", "_sxb_fgetc(", SC_INT, SC_INT),
+DEF_FUNC2("fopen(", "_sxb_fopen(", SC_INT, SC_STR, SC_STR),
+DEF_FUNC2("fputc(", "_sxb_fputc(", SC_INT, SC_CHAR, SC_INT),
+DEF_FUNC2("frename(","_sxb_frename(", SC_INT, SC_STR, SC_STR),
+DEF_FUNC3("fseek(", "_sxb_fseek(",SC_INT, SC_INT, SC_INT, SC_INT),
+DEF_FUNC2("fwrites(","_sxb_fwrites(", SC_INT, SC_STR, SC_INT),
+
+DEF_FUNC2("gcvt(", "gcvt(", SC_STR, SC_FLOAT, SC_INT),
+
+DEF_FUNC1("hex$(", "_sxb_hex(", SC_STR, SC_INT),
+
+// inkey$
+DEF_FUNC1("int(", "int(", SC_INT, SC_FLOAT),
+DEF_FUNC1("itoa(", "itoa(", SC_STR, SC_INT),
+DEF_FUNC3("instr(", "instr(",SC_INT, SC_INT, SC_STR, SC_STR),
+DEF_FUNC1("isalnum(", "isalnum(", SC_INT, SC_CHAR),
+DEF_FUNC1("isalpha(", "isalpha(", SC_INT, SC_CHAR),
+DEF_FUNC1("isascii(", "isascii(", SC_INT, SC_CHAR),
+DEF_FUNC1("iscntrl(", "iscntrl(", SC_INT, SC_CHAR),
+DEF_FUNC1("isdigit(", "isdigit(", SC_INT, SC_CHAR),
+DEF_FUNC1("isgraph(", "isgraph(", SC_INT, SC_CHAR),
+DEF_FUNC1("islower(", "islower(", SC_INT, SC_CHAR),
+DEF_FUNC1("isprint(", "isprint(", SC_INT, SC_CHAR),
+DEF_FUNC1("ispunct(", "ispunct(", SC_INT, SC_CHAR),
+DEF_FUNC1("isspace(", "isspace(", SC_INT, SC_CHAR),
+DEF_FUNC1("isupper(", "isupper(", SC_INT, SC_CHAR),
+DEF_FUNC1("isxdigit(", "isxdigit(", SC_INT, SC_CHAR),
+
+DEF_FUNC1("len(", "len(", SC_INT, SC_STR),
+DEF_FUNC1("log(", "log(", SC_FLOAT, SC_FLOAT),
+DEF_FUNC2("left$(", "left$(", SC_STR, SC_STR, SC_INT),
+
+DEF_FUNC3("mid$(", "_sxb_mid(", SC_STR, SC_STR, SC_INT, SC_INT),
+DEF_FUNC1("mirror$(", "_sxb_mirror(", SC_STR, SC_STR),
+DEF_FUNC1("mouse(", "mouse(", SC_CHAR, SC_INT),
+
+DEF_FUNC1("oct$(", "_sxb_oct(", SC_STR, SC_INT),
+DEF_FUNC2("pow(", "pow(", SC_FLOAT, SC_FLOAT, SC_FLOAT),
+
+DEF_FUNC0("rnd(", "rnd(", SC_FLOAT),
+DEF_FUNC0("rand(", "rand(", SC_INT),
+DEF_FUNC2("right$(", "_sxb_rightS(", SC_STR, SC_STR, SC_INT),
+
+//
+DEF_FUNC1("str$(", "_sxb_str(", SC_STR, SC_FLOAT),
+DEF_FUNC1("sgn(", "sgn(", SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("sin(", "sin(",SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("sqr(", "sqr(", SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("space$(", "_sxb_spaceS(", SC_STR, SC_INT),
+DEF_FUNC2("strchr(", "strchr(", SC_INT, SC_STR, SC_CHAR),
+DEF_FUNC2("strcspn(", "strcspn(", SC_INT, SC_STR, SC_STR),
+DEF_FUNC2("string$(", "_sxb_stringS(", SC_STR, SC_INT, SC_STR),
+DEF_FUNC1("strlen(", "strlen(", SC_INT, SC_STR),
+DEF_FUNC2("strrchr(", "strrchr(", SC_INT, SC_STR, SC_CHAR),
+DEF_FUNC2("strspn(", "strspn(", SC_INT, SC_STR, SC_STR),
+DEF_FUNC2("strtok(", "strtok(", SC_STR, SC_STR, SC_STR),
+
+DEF_FUNC1("toascii(", "toascii(", SC_INT, SC_CHAR),
+DEF_FUNC1("tolower(", "tolower(", SC_INT, SC_CHAR),
+DEF_FUNC1("toupper(", "toupper(", SC_INT, SC_CHAR),
+DEF_FUNC1("tan(", "tan(", SC_FLOAT, SC_FLOAT),
+
+DEF_FUNC1("val(", "val(", SC_FLOAT, SC_STR)
 };
 
+
 int
-func_external(void) {
+ParseRegularFunctions(void) {
 	int	i;
-	int totalFunctions = sizeof(statementDefinitions) / sizeof(DEF_STATEMENT);
+	int totalFunctions = sizeof(funcDefinitions) / sizeof(DEF_STATEMENT);
 	for (i = 0; i < totalFunctions; i++) {
-		DEF_STATEMENT* f = &statementDefinitions[i];
-		if (pamatch(f->name)) {
-			if (f->numParams == 0) {
-				state0(f->retClass);
-			}
-			if (f->numParams == 1) 		state1(f->retClass, f->param1);
-			if (f->numParams == 2) 		state2(f->retClass, f->param1, f->param2);
-			if (f->numParams == 3)		state3(f->retClass, f->param1, f->param2, f->param3);
-			if (f->numParams > 3)		PutError("Internal Error func_external %s %d", f->name, f->numParams);
+		DEF_STATEMENT* f = &funcDefinitions[i];
+		if (amatch(f->b_name)) {
+			strpush(f->c_name);
+			if (f->numParams == 0) 	func0(f->retClass);
+			if (f->numParams == 1) 	func1(f->retClass, f->param1);
+			if (f->numParams == 2) 	func2(f->retClass, f->param1, f->param2);
+			if (f->numParams == 3)	func3(f->retClass, f->param1, f->param2, f->param3);
+			if (f->numParams > 3)	PutError("Internal Error func_external %s %d", f->b_name, f->numParams);
 			return TRUE;
 		}
 	}
@@ -605,7 +219,7 @@ doEcvt(void)
 {
 	int	i;
 	SYMTBL* p[2];
-	char* q;
+	char *q1, *q2;
 
 	expression();
 	ToFloat1(lastClass);
@@ -615,18 +229,20 @@ doEcvt(void)
 
 	for (i = 0; i < 2; i++) {
 		check(",");
-		if (p[i] = SearchLoc(TokenPtr));
+		SkipSpace();
+		if (p[i] = SearchLoc(TokenPtr)); 
 		else if (p[i] = SearchGlo(TokenPtr));
 		else
-			PutError("未宣言の変数です");
+			PutError("未宣言の変数です !!");
 
 		if (p[i]->class != SC_INT || p[i]->dim != 0)
 			PutError("変数の型が違います");
 		TokenPtr += TokenLen(TokenPtr);
 	}
 	check(")");
-	q = strpop();
-	strpush("%s,%s,%s,%s)", q, strpop(), p[0]->name, p[1]->name);
+	q1 = strpop();
+	q2 = strpop();
+	strpush("%s%s, %s, \&%s, \&%s)", strpop(), q2, q1, p[0]->name, p[1]->name);
 	lastClass = SC_STR;
 }
 
@@ -662,7 +278,7 @@ doTransStr(int exps)
 		check(",");
 		expression();
 		ToInt1(lastClass);
-		sxb_strcat(",%s", strpop());
+		sxb_strcat(" ,%s", strpop());
 	}
 	check(")");
 	sxb_strcat(")");
@@ -691,7 +307,7 @@ func0( SCLASS ret)
 }
 
 /*
-** パラメータが一つの関数
+** parse a function with 1 paramter
 */
 void
 func1(SCLASS ret, SCLASS param1)
@@ -727,10 +343,10 @@ func2(SCLASS ret, SCLASS par1, SCLASS par2)
 }
 
 /*
-** パラメータが三つの関数
+** Parse a function with 3 parameters
 */
 void
-func3(SCLASS par1, SCLASS par2, SCLASS par3, SCLASS ret)
+func3(SCLASS ret, SCLASS par1, SCLASS par2, SCLASS par3)
 {
 	char	*p, *q;
 
@@ -757,17 +373,20 @@ state0(SCLASS ret) {
 	func0(ret);
 	PutCode("%s;", strpop());
 }
+
 void
 state1(SCLASS ret, SCLASS par1) {
 	func1(ret, par1);
 	PutCode("%s;", strpop());
 }
+
 void
 state2(SCLASS ret, SCLASS par1, SCLASS par2)
 {
 	func2(ret, par1, par2);
 	PutCode("%s;", strpop());
 }
+
 void
 state3(SCLASS ret, SCLASS par1, SCLASS par2, SCLASS par3)
 {
@@ -792,7 +411,7 @@ doFread(void)
 	TokenPtr += TokenLen(TokenPtr);
 	sxb_strcat(p->name);
 
-	if (p->class == SC_STR) PutError("数値型の配列を指定して下さい");
+	if (p->class == SC_STR)  PutError("数値型の配列を指定して下さい");
 	if (p->dim == 0) PutError("１次元以上の配列を指定して下さい");
 	else if (p->dim == 1);
 	else {
@@ -820,27 +439,3 @@ doFread(void)
 	sxb_strcat(", sizeof(%s), %s,%s)", p->name, strpop(), q);
 }
 
-
-void
-DoVarhdl(void)
-{
-	SYMTBL* p;
-	int		isGlobal;
-
-	if (p = SearchLoc(TokenPtr)) {
-		isGlobal = FALSE;
-	}
-	else if (p = SearchGlo(TokenPtr)) {
-		isGlobal = TRUE;
-	}
-	else PutError("未宣言の変数です");
-
-	TokenPtr += TokenLen(TokenPtr);
-	if (p->dim != 1) PutError("１次元の配列を指定して下さい");
-	if (p->class != SC_INT)
-		PutError("数値型の配列を指定して下さい");
-	check(")");
-	strpush("_sxb_varhdl(%s, sizeof(%d))", p->name, p->name);
-
-	lastClass = SC_INT;
-}

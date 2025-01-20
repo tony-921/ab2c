@@ -13,7 +13,7 @@
 
 #include	"sxbasic.h"
 
-void	PutFunctionName(char* name, char* event, char* index);
+// void	PutFunctionName(char* name, char* event, char* index);
 
 extern	FILE* outputFp;
 extern	bool	toSkipLineNumber;
@@ -328,7 +328,7 @@ Pass1(void)
 		if (amatch("func"))
 			PredecFunc();
 	}
-	PrintPredec();
+	PrintFunctionPrototype();
 }
 
 // FIXME -- Not needed anymore ?
@@ -371,6 +371,7 @@ Pass2(void)
 }
 #endif
 
+#ifdef FIXME
 void
 PutFunctionName(char* name, char* event, char* index)
 {
@@ -383,12 +384,13 @@ PutFunctionName(char* name, char* event, char* index)
 		fprintf(outputFp, "(*gp->lastItem)->%s = %s;\n", index, buff);
 	}
 }
+#endif
 
 /*
 ** ŠÖ”‚Ì‘OéŒ¾‚ğì¬‚·‚é
 */
 void
-PrintPredec(void)
+PrintFunctionPrototype(void)
 {
 	int	i, j;
 	FNCTBL* p;
@@ -396,20 +398,26 @@ PrintPredec(void)
 	for (i = 0; i < fncSymCnt; i++) {
 		p = &fncSymTbl[i];
 
-		if (p->retClass == SC_VOID)		PutCode("void ");
-		else if (p->retClass == SC_CHAR)	PutCode("char");
-		else if (p->retClass == SC_INT)	PutCode("int");
-		else if (p->retClass == SC_FLOAT)PutCode("double");
-		else if (p->retClass == SC_STR)	PutCode("char *");
-
-		PutCode("\t%s(", p->name);
+		PutCode("%s\t%s(", TypeToStr(p->retClass), p->name);
 		if (p->pars == 0)	PutCode("void ");
 		for (j = 0; j < p->pars; j++) {
-			PutClass(p->parClass[j]);
+			PrintType(p->parClass[j]);
 			if (j != p->pars - 1)	PutCode(",");
 		}
 		PutCode(");\n");
 	}
+}
+
+char*
+TypeToStr(SCLASS type)
+{
+	if (type == SC_VOID)		return "void ";
+	else if (type == SC_CHAR)	return "char";
+	else if (type == SC_INT)	return "int";
+	else if (type == SC_FLOAT)	return "double";
+	else if (type == SC_STR)	return "char *";
+
+	PutError("Undefined type %d", type);
 }
 
 /*
