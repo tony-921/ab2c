@@ -438,4 +438,3 @@ doFread(void)
 	q = strpop();
 	sxb_strcat(", sizeof(%s), %s,%s)", p->name, strpop(), q);
 }
-
