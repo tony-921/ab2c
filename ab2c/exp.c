@@ -153,11 +153,8 @@ factor(void)
 	}
 	else if (c = TokenPtr[TokenLen(TokenPtr)], c == '(') {
 		FNCTBL* q;
-		q = pcall();
+		q = doFunctionCall();
 		lastClass = q->retClass;
-	}
-	else if (c == '.' || c == '[') {
-		RefProp();
 	}
 	else SynErr();
 }
@@ -223,41 +220,6 @@ DoIndexed(SYMTBL* p)
 	if (dim > 0) PutError("Too few elements");
 }
 
-/*
-** プロパティの値を参照する
-*/
-void
-RefProp(void)
-{
-	char	itemname[100];
-	char	propname[100];
-	bool	isarray = FALSE;
-
-	GetString(itemname);	/* Get Item Name */
-	if (amatch("[")) {
-		isarray = TRUE;
-		expression();
-		ToInt1(lastClass);
-		check("]");
-	}
-	check(".");
-	if (amatch("caption")) {
-		if (isarray)	strpush("_sxb_ref_propS(\"%s\",1, %s, \"caption\")", itemname, strpop());
-		else		strpush("_sxb_ref_propS(\"%s\",0, 0,  \"caption\")", itemname);
-		lastClass = SC_STR;
-	}
-	else if (amatch("page")) {
-		if (isarray)	strpush("_sxb_ref_propS(\"%s\",1, %s, \"page\")", itemname, strpop());
-		else		strpush("_sxb_ref_propS(\"%s\",0, 0,  \"page\")", itemname);
-		lastClass = SC_STR;
-	}
-	else {
-		GetString(propname);
-		if (isarray)	strpush("_sxb_ref_prop(\"%s\",1, %s, \"%s\")", itemname, strpop(), propname);
-		else		strpush("_sxb_ref_prop(\"%s\",0,  0, \"%s\")", itemname, propname);
-		lastClass = SC_INT;
-	}
-}
 
 /*
 ** ＊，／，￥，modの処理ルーチン
@@ -534,7 +496,7 @@ expression6(void)
 			lastClass = ClassConvert(classp, lastClass);
 		}
 	}
-	else 	if (amatch("!=") || amatch("<>")) {
+	else if (amatch("!=") || amatch("<>")) {
 		expression5();
 		p = strpop();
 		if (classp == SC_STR && lastClass == SC_STR) {
@@ -556,7 +518,7 @@ expression6(void)
 			lastClass = ClassConvert(classp, lastClass);
 		}
 	}
-	else 	if (amatch(">")) {
+	else if (amatch(">")) {
 		expression5();
 		p = strpop();
 		if (classp == SC_STR && lastClass == SC_STR) {
@@ -567,7 +529,7 @@ expression6(void)
 			lastClass = ClassConvert(classp, lastClass);
 		}
 	}
-	else 	if (amatch("==") | amatch("=")) {
+	else if (amatch("==") | amatch("=")) {
 		expression5();
 		p = strpop();
 		if (classp == SC_STR && lastClass == SC_STR) {
@@ -709,7 +671,7 @@ SkipSpace(void)
 }
 
 /*
-** Advance the token pointer upon maching the keyword
+** Advance the token pointer upon matching the keyword
 */
 int
 amatch(char* s)

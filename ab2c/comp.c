@@ -132,85 +132,10 @@ parseStatement(void)
 	int		ret = FALSE;
 
 	SkipSpace();
-	ret = state_external();
+	ret = ParseRegularStatement();
 	if (ret) return TRUE;
 
-	switch (*TokenPtr) {
-	case 'a':
-		ret = stateA();
-		break;
-	case 'b':
-		ret = stateB();
-		break;
-	case 'c':
-		ret = stateC();
-		break;
-	case 'd':
-		ret = stateD();
-		break;
-	case 'e':
-		ret = stateE();
-		break;
-	case 'f':
-		ret = stateF();
-		break;
-	case 'g':
-		ret = stateG();
-		break;
-	case 'h':
-		ret = stateH();
-		break;
-	case 'i':
-		ret = stateI();
-		break;
-	case 'j':
-		ret = stateJ();
-		break;
-	case 'k':
-		ret = stateK();
-		break;
-	case 'l':
-		ret = stateL();
-		break;
-	case 'm':
-		ret = stateM();
-		break;
-	case 'n':
-		ret = stateN();
-		break;
-	case 'o':
-		ret = stateO();
-		break;
-	case 'p':
-		ret = stateP();
-		break;
-	case 'q':
-		ret = stateQ();
-		break;
-	case 'r':
-		ret = stateR();
-		break;
-	case 's':
-		ret = stateS();
-		break;
-	case 't':
-		ret = stateT();
-		break;
-	case 'u':
-		ret = stateU();
-		break;
-	case 'v':
-		ret = stateV();
-		break;
-	case 'w':
-		ret = stateW();
-		break;
-	case '?':
-		TokenPtr++;
-		doPrint();
-		ret = TRUE;
-		break;
-	}
+	ret = doSpecialStatement();
 	if (ret)	return;
 
 	if (*TokenPtr == '{') {
@@ -221,18 +146,15 @@ parseStatement(void)
 	else if (isalpha(*TokenPtr)) {
 		nextToken = &TokenPtr[TokenLen(TokenPtr)];
 		if (*nextToken == ':')
-			doLabel();
+			doLabelDefinition();
 		else if (p = SearchLoc(TokenPtr))
 			doSubsutitute(FALSE, p);
 		else if (p = SearchGlo(TokenPtr))
 			doSubsutitute(TRUE, p);
 		else if (*nextToken == '(') {
-			pcall();
+			doFunctionCall();
 			PutCode("%s", strpop());
 		}
-//		FIXME - remove
-//		else if (*nextToken == '.' || *nextToken == '[')
-//			doProp();
 		else
 			PutError("Undefined Variable Error");
 	}
@@ -241,107 +163,28 @@ parseStatement(void)
 	PutCode(";");
 }
 
-int
-stateA(void)
-{
-	if (amatch("alart(")) {
-		strpush("_sxb_alart(");
-		state2(SC_INT, SC_STR, SC_INT);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
 
 int
-stateB(void)
+doSpecialStatement(void)
 {
 	if (amatch("break"))		doBreak();
 	else if (amatch("beep")) {
-		PutCode("DMBeep(1);");
+		PutCode("_sxb_beep(1);");
 	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-stateC(void)
-{
-	if (amatch("continue"))		doContinue();
+	else if (amatch("continue"))		doContinue();
 	else if (amatch("case"))	doCase();
 	else if (amatch("cls")) {
-		PutCode("_sxb_cls(); // FIXME");
-	} else {
-		return(FALSE);
-	}
-
-	return(TRUE);
-}
-
-int
-stateD(void)
-{
-	if (amatch("default")) 			doDefault();
-	else if (amatch("di()"));
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-stateE(void)
-{
-	if (amatch("endfunc"))		PutError("endfunc without func");
+		PutCode("_sxb_cls()");
+	} else if (amatch("default")) 			doDefault();
+	else if (amatch("endfunc"))		PutError("endfunc without func");
 	else if (amatch("endswitch"))PutError("endswitch without switch");
 	else if (amatch("endwhile"))	PutError("endwhile without while");
-	else if (amatch("endtask(")) state1(SC_INT, SC_INT);
 	else if (amatch("end"))		PutCode("_sxb_end();");
-	else if (amatch("ei()"));
-	else if (amatch("exit()")) {
-		PutCode("_sxb_exit(1);");
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-stateF(void)
-{
-	if (amatch("for")) {
+	else if (amatch("for")) {
 		doFor();
 	}
 	else if (amatch("func")) {
 		parseFunction();
-	}
-	else if (amatch("fclose(")) {
-		strpush("_sxb_fclose(");
-		state1(SC_INT, SC_INT);
-	}
-	else if (amatch("fcloseall(")) {
-		strpush("_sxb_fcloseall(");
-		state0(SC_INT);
-	}
-	else if (amatch("fdelete(")) {
-		strpush("_sxb_fdelete(");
-		state1(SC_STR, SC_INT);
-	}
-	else if (amatch("fputc(")) {
-		strpush("_sxb_fputc(");
-		state2(SC_CHAR, SC_INT, SC_INT);
-	}
-	else if (amatch("frename(")) {
-		strpush("_sxb_frename(");
-		state2(SC_STR, SC_STR, SC_INT);
-	}
-	else if (amatch("fseek(")) {
-		strpush("_sxb_fseek(");
-		state3(SC_INT, SC_INT, SC_INT, SC_INT);
 	}
 	else if (amatch("fread(")) {
 		strpush("_sxb_fread(");
@@ -358,46 +201,15 @@ stateF(void)
 		doTransStr(1);
 		PutCode("%s;", strpop());
 	}
-	else if (amatch("fwrites(")) {
-		strpush("_sxb_fwrites(");
-		state2(SC_STR, SC_INT, SC_INT);
-	}
-	else if (pamatch("fock(")) {
-		state1(SC_STR, SC_INT);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-stateG(void)
-{
-	if (amatch("goto"))			doGoto();
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-stateH(void)
-{
-	return(FALSE);
-}
-
-int
-stateI(void)
-{
-	if (amatch("if")) {
+	else if (amatch("goto"))			doGoto();
+	else if (amatch("if")) {
 		doIf();
 	}
 	else if (amatch("input")) {
 		doInput();
 	}
-	else if (pamatch("iocs(")) {
-		state1(SC_INT, SC_INT);
+	else if (amatch("?")) {
+		doPrint();
 	}
 	else
 		return(FALSE);
@@ -447,17 +259,6 @@ doLinput(void)
 #endif
 }
 
-int
-stateJ(void)
-{
-	return(FALSE);
-}
-
-int
-stateK(void)
-{
-	return(FALSE);
-}
 
 int
 stateL(void)
@@ -472,11 +273,6 @@ stateL(void)
 	return(TRUE);
 }
 
-int
-stateM(void)
-{
-	return(FALSE);
-}
 
 int
 stateN(void)
@@ -488,18 +284,6 @@ stateN(void)
 	return(TRUE);
 }
 
-int
-stateO(void)
-{
-	if (amatch("openres(")) {
-		strpush("_sxb_openres(");
-		state1(SC_STR, SC_INT);
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
 
 int
 stateP(void)
@@ -507,35 +291,18 @@ stateP(void)
 	if (amatch("print")) {
 		doPrint();
 	}
-	else if (pamatch("poke(")) {
-		state2(SC_INT, SC_INT, SC_INT);
-	}
-	else if (pamatch("pokew(")) {
-		state2(SC_INT, SC_INT, SC_INT);
-	}
-	else if (pamatch("pokel(")) {
-		state2(SC_INT, SC_INT, SC_INT);
-	}
 	else
 		return(FALSE);
 
 	return(TRUE);
 }
 
-int
-stateQ(void)
-{
-	return(FALSE);
-}
 
 int
 stateR(void)
 {
 	if (amatch("repeat"))		doRepeat();
 	else if (amatch("return"))	doReturn();
-	else if (pamatch("randomize(")) {
-		state1(SC_INT, SC_INT);
-	}
 	else
 		return(FALSE);
 
@@ -568,31 +335,12 @@ stateS(void)
 		doTransStr(0);
 		PutCode("%s;", strpop());
 	}
-	else if (pamatch("srand(")) {
-		state1(SC_INT, SC_INT);
-	}
-	else if (amatch("sendmes(")) {
-		strpush("_sxb_sendmes(");
-		state2(SC_INT, SC_STR, SC_INT);
-	}
-	else if (amatch("setenv(")) {
-		strpush("_sxb_setenv(");
-		state3(SC_STR, SC_INT, SC_STR, SC_INT);
-	}
-	else if (pamatch("set_reg(")) {
-		state2(SC_INT, SC_INT, SC_INT);
-	}
 	else
 		return(FALSE);
 
 	return(TRUE);
 }
 
-int
-stateT(void)
-{
-	return(FALSE);
-}
 
 int
 stateU(void)
@@ -600,16 +348,6 @@ stateU(void)
 	if (amatch("until")) {
 		PutErrorE("Missing \'repeat\'");
 	} else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-stateV(void)
-{
-	if (pamatch("vanish("))	state1(SC_INT, SC_INT);
-	else
 		return(FALSE);
 
 	return(TRUE);
@@ -1337,8 +1075,8 @@ DoParam(FNCTBL* f)
 
 			if (amatch(";")) {
 				if (amatch("int"));
-				else if (amatch("char"))		 v->class = SC_CHAR;
-				else if (amatch("float"))	 v->class = SC_FLOAT;
+				else if (amatch("char"))	v->class = SC_CHAR;
+				else if (amatch("float"))	v->class = SC_FLOAT;
 				else if (amatch("str")) { v->class = SC_STR;	v->dim = 1; }
 				else SynErr();
 			}
@@ -1360,7 +1098,7 @@ PrintType(SCLASS t)
 ** ラベルの定義
 */
 void
-doLabel(void)
+doLabelDefinition(void)
 {
 	LBLTBL* p;
 
@@ -1388,52 +1126,65 @@ doInput(void)
 	int	isGlobal = FALSE;
 	int	dim;
 	SCLASS	class;
+
+	doInput_Prompt();
+	SkipSpace();
+
+	if (p = SearchLoc(TokenPtr)) {
+		isGlobal = FALSE;
+	}
+	else if (p = SearchGlo(TokenPtr)) {
+		isGlobal = TRUE;
+	}
+	else {
+		PutError("未宣言の変数です");
+	}
+	TokenPtr += TokenLen(TokenPtr);
+	doInput_Variable(p, isGlobal);
+}
+
+int
+doInput_Prompt(void)
+{
+	char* possiblePrompt = NULL;
 	char buff[MAX_BUFF_SIZE] = "\0";
 	char s[MAX_BUFF_SIZE] = "\0";
 
+	int	isGlobal = FALSE;
+
 	SkipSpace();
- 	expression();
-	if (lastClass == SC_NONE) {
-		printf("FIXME - No prompt string");
-	}
-	else {
-		/* parse the prompt */
+
+	possiblePrompt = TokenPtr;
+	expression();
+
+	// input <prompt>;<var>
+	if (amatch(",") || amatch(";")) {
 		ToStr1(lastClass);
 		strncpy(buff, strpop(), sizeof(buff));
 		sprintf(s, "printf(%s);\n", buff);
 		PutCode(s);
-
-		PutCode("printf(\"?\");\n");
-
-		if (!amatch(";") && !amatch(",")) {
-			PutError(" Either \";\" or \",\" expected");
-		}
-		SkipSpace();
-
-		if (p = SearchLoc(TokenPtr)) {
-			isGlobal = FALSE;
-		}
-		else if (p = SearchGlo(TokenPtr)) {
-			isGlobal = TRUE;
-		}
-		else {
-			PutError("未宣言の変数です");
-		}
-		TokenPtr += TokenLen(TokenPtr);
-		doInput_Variable(p, isGlobal);
+		return(TRUE);
 	}
+	// input <var> (without prompt)
+	// Get rid of previous expr parse.
+	strpop();
+	TokenPtr = possiblePrompt;
+
+	PutCode("printf(\"?\");\n");
+
+	return (FALSE);
 }
 
 void
 doInput_Variable(SYMTBL * p, int isGlobal)
 {
 	int	dim = p->dim;
-	int clazz = p->class;
+	int type = p->class;
 	char* fmt;
 	char buff[MAX_BUFF_SIZE] = "\0";
 	char s[MAX_BUFF_SIZE] = "\0";
 
-	if (clazz == SC_STR)  dim--;
+	if (type == SC_STR)  dim--;
 	if (p->class == SC_CHAR) {
 		fmt = "%c";
 	} else if (p->class == SC_INT) {
@@ -1444,21 +1195,6 @@ doInput_Variable(SYMTBL * p, int isGlobal)
 		fmt = "%s";
 	}
 
-#ifdef FIXME
-	if (p->class == SC_STR && amatch("[")) {
-		clazz = SC_CHAR;
-		dim = 1;
-		if (p->dim >= 2) {
-			if (isGlobal) PutArrayCode(0x9c, p);
-			else	     PutArrayCode(0x9b, p);
-		}
-		expression();
-		check("]");
-	} else if (dim != 0) {
-		doSoeji(p);
-	} else {
-	}
-#endif
 	PutCode("scanf(\"%s\", &%s);\n", fmt, p->name);
 }
 
@@ -1509,7 +1245,7 @@ doLocate(void)
 ** 関数の呼び出し処理
 */
 FNCTBL*
-pcall(void)
+doFunctionCall(void)
 {
 	FNCTBL* p;
 	int		paraCnt = 0;	/* 引数のカウンタ */
@@ -1538,8 +1274,20 @@ pcall(void)
 	return(p);
 }
 
-// Music functions
-DEF_STATEMENT statementDefinitions[] = {
+// Regular statement Functions
+DEF_FUNCTIONS statementDefinitions[] = {
+
+	// regular functions
+	STATEMENT1("exit(", "exit(", SC_INT),
+	STATEMENT1("fclose(", "_sxb_fclose(", SC_INT),
+	STATEMENT0("fcloseall(", "_sxb_fcloseall("),
+	STATEMENT1("fdelete(", "_sxb_fdelete(", SC_INT),
+	STATEMENT2("fputc(", "_sxb_fputc(", SC_CHAR, SC_INT),
+	STATEMENT2("frename(", "_sxb_frename(", SC_STR, SC_STR),
+	STATEMENT3("fseek(",   "_sxb_fseek(", SC_INT, SC_INT, SC_INT),
+	STATEMENT1("randomize(", "_sxb_randomize(", SC_INT),
+	STATEMENT1("srand(", "_sxb_srand(", SC_INT),
+
 	// music functions
 	STATEMENT2("m_alloc(", "m_alloc(", SC_INT, SC_INT),
 	STATEMENT2("m_assign(", "m_assign(", SC_INT, SC_INT),
@@ -1552,20 +1300,20 @@ DEF_STATEMENT statementDefinitions[] = {
 };
 
 int
-state_external(void) {
+ParseRegularStatement(void) {
 	int	i;
-	int totalFunctions = sizeof(statementDefinitions) / sizeof(DEF_STATEMENT);
+	int totalFunctions = sizeof(statementDefinitions) / sizeof(DEF_FUNCTIONS);
 	for (i = 0; i < totalFunctions; i++) {
-		DEF_STATEMENT* f = &statementDefinitions[i];
+		DEF_FUNCTIONS* f = &statementDefinitions[i];
 		if (amatch(f->b_name)) {
 			strpush(f->c_name);
-			if (f->numParams == 0) {
-				state0(f->retClass);
-			}
-			if (f->numParams == 1) 		state1(f->retClass, f->param1);
-			if (f->numParams == 2) 		state2(f->retClass, f->param1, f->param2);
-			if (f->numParams == 3)		state3(f->retClass, f->param1, f->param2, f->param3);
-			if (f->numParams > 3)		PutError("Internal Error state_external %s %d", f->b_name, f->numParams);
+			if (f->numParams == 0)		func0(SC_NONE);
+			if (f->numParams == 1) 		func1(SC_NONE, f->param1);
+			if (f->numParams == 2) 		func2(SC_NONE, f->param1, f->param2);
+			if (f->numParams == 3)		func3(SC_NONE, f->param1, f->param2, f->param3);
+			if (f->numParams > 3)		PutError("Internal Error ParseRegularStatement %s %d", f->b_name, f->numParams);
+
+			PutCode("%s;", strpop());
 			return TRUE;
 		}
 	}

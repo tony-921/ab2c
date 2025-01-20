@@ -317,7 +317,6 @@ Pass1(void)
 {
 	PutCode("#include\t<stdio.h>\n");
 	PutCode("#include\t<string.h>\n");
-	// FIXME - Confirm the header files.
 	PutCode("#include\t\"ab2c_run.h\"\n");
 	PutCode("#include\t\"ab2c_var.h\"\n");
 
@@ -331,60 +330,6 @@ Pass1(void)
 	PrintFunctionPrototype();
 }
 
-// FIXME -- Not needed anymore ?
-#ifdef FIXME
-/*
-** Put code to arrange items in window engine.
-*/
-void
-Pass2(void)
-{
-	int	eventmask;
-	char	itemname[100];
-
-	PutCode("void\n"
-		"ab2c_Initialize(void )\n"
-		"{\n");
-
-	rewind(inputFp);
-
-	while (!feof(inputFp)) {
-		fgets(prgBuff, sizeof(prgBuff), inputFp);
-		TokenPtr = prgBuff;
-		SkipSpace();
-
-		if (sscanf(prgBuff, "¥SX-BASIC Version %hf", &version) == 1) {
-			if (fabs(version - 0.70) > 0.001)
-				PutError("Sorry, I can compile only version 0.70 sxb file.\n"
-					"This file seems to be for version %4.2f.\n", version);
-		}
-		else if (amatch("¥")) {
-			p = strstr(prgBuff, "\n");
-			if (p)	*p = '\0';
-			PutCode("CreateItems(\"%s\");\n", prgBuff);
-			sscanf(prgBuff, "¥%d,%s (%d,%d,%d,%d),%d,%d,%x",
-				&item, itemname, &d, &d, &d, &d, &d, &d, &eventmask);
-			PutEventFunction(item, itemname, eventmask);
-		}
-	}
-	PutCode("}\n");
-}
-#endif
-
-#ifdef FIXME
-void
-PutFunctionName(char* name, char* event, char* index)
-{
-	char	buff[100];
-	FNCTBL* p;
-
-	sprintf(buff, "%s_%s", name, event);
-	p = SearchFunc(buff);
-	if (p) {
-		fprintf(outputFp, "(*gp->lastItem)->%s = %s;\n", index, buff);
-	}
-}
-#endif
 
 /*
 ** ŠÖ”‚Ì‘OéŒ¾‚ğì¬‚·‚é

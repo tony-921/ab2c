@@ -99,7 +99,7 @@ ParseSpecialFunctions(void)
 
 
 // regular functions
-DEF_STATEMENT funcDefinitions[] = {
+DEF_FUNCTIONS funcDefinitions[] = {
 
 DEF_FUNC1("abs(", "abs(", SC_FLOAT, SC_FLOAT),
 DEF_FUNC1("asc(", "asc(", SC_INT, SC_STR),
@@ -194,9 +194,9 @@ DEF_FUNC1("val(", "val(", SC_FLOAT, SC_STR)
 int
 ParseRegularFunctions(void) {
 	int	i;
-	int totalFunctions = sizeof(funcDefinitions) / sizeof(DEF_STATEMENT);
+	int totalFunctions = sizeof(funcDefinitions) / sizeof(DEF_FUNCTIONS);
 	for (i = 0; i < totalFunctions; i++) {
-		DEF_STATEMENT* f = &funcDefinitions[i];
+		DEF_FUNCTIONS* f = &funcDefinitions[i];
 		if (amatch(f->b_name)) {
 			strpush(f->c_name);
 			if (f->numParams == 0) 	func0(f->retClass);
@@ -366,32 +366,6 @@ func3(SCLASS ret, SCLASS par1, SCLASS par2, SCLASS par3)
 	q = strpop();
 	sxb_strcat("%s,%s,%s)", strpop(), q, p);
 	lastClass = ret;
-}
-
-void
-state0(SCLASS ret) {
-	func0(ret);
-	PutCode("%s;", strpop());
-}
-
-void
-state1(SCLASS ret, SCLASS par1) {
-	func1(ret, par1);
-	PutCode("%s;", strpop());
-}
-
-void
-state2(SCLASS ret, SCLASS par1, SCLASS par2)
-{
-	func2(ret, par1, par2);
-	PutCode("%s;", strpop());
-}
-
-void
-state3(SCLASS ret, SCLASS par1, SCLASS par2, SCLASS par3)
-{
-	func3(ret, par1, par2, par3);
-	PutCode("%s;", strpop());
 }
 
 /*
