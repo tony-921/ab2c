@@ -17,7 +17,8 @@ bool	toSkipLineNumber = TRUE;
 // FIXME
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\music_sample\\music_sample"
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\func_test"
-#define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\state_test"
+// #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\state_test"
+#define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\file_test"
 
 void
 main(int argc, char *argv[])

@@ -103,11 +103,11 @@ parseVariableDeclarations(int isGlobal)
 		do {
 			if (amatch("dim"))	 DeclareArray(isGlobal);
 			else if (famatch("int ") || famatch("int\t"))
-				DeclareVar(isGlobal, SC_INT);
+				DeclareVariable(isGlobal, SC_INT);
 			else if (famatch("char ") || famatch("char\t"))
-				DeclareVar(isGlobal, SC_CHAR);
+				DeclareVariable(isGlobal, SC_CHAR);
 			else if (famatch("float ") || famatch("float\t"))
-				DeclareVar(isGlobal, SC_FLOAT);
+				DeclareVariable(isGlobal, SC_FLOAT);
 			else if (amatch("str ") || amatch("str\t")) {
 				PutCode("char\t");
 				DeclareStr(isGlobal);
@@ -158,7 +158,9 @@ parseStatement(void)
 		else
 			PutError("Undefined Variable Error");
 	}
-	else	SynErr();
+	else if (endOfLine() == FALSE) {
+		SynErr();
+	}
 
 	PutCode(";");
 }
@@ -208,7 +210,42 @@ doSpecialStatement(void)
 	else if (amatch("input")) {
 		doInput();
 	}
-	else if (amatch("?")) {
+	else if (amatch("linput")) {
+		doLinput();
+	}
+	else if (amatch("locate")) {
+		doLocate();
+	}
+	else if (amatch("next")) {
+		PutError("Missing \'for\' keyword before \'next\'");
+	}
+	else if (amatch("print")) {
+		doPrint();
+	}
+	else if (amatch("repeat"))	doRepeat();
+	else if (amatch("return"))	doReturn();
+	else if (amatch("switch")) {
+		doSwitch();
+	} else if (pamatch("strlwr(")) {
+		doTransStr(0);
+		PutCode("%s;", strpop());
+	} else if (pamatch("strnset(")) {
+		doTransStr(2);
+		PutCode("%s;", strpop());
+	} else if (pamatch("strrev(")) {
+		doTransStr(0);
+		PutCode(";%s", strpop());
+	} else if (pamatch("strset(")) {
+		doTransStr(1);
+		PutCode("%s;", strpop());
+	} else if (pamatch("strupr(")) {
+		doTransStr(0);
+		PutCode("%s;", strpop());
+	} else if (amatch("until")) {
+		PutErrorE("Missing \'repeat\'");
+	} else if (amatch("while")) {
+		doWhile();
+	} else if (amatch("?")) {
 		doPrint();
 	}
 	else
@@ -258,111 +295,6 @@ doLinput(void)
 	else		PutArrayCode(0x9b, p);
 #endif
 }
-
-
-int
-stateL(void)
-{
-	if (amatch("linput")) {
-		doLinput();
-	} else if (amatch("locate")) {
-		doLocate();
-	} else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-
-int
-stateN(void)
-{
-	if (amatch("next"))		PutError("Missing \'for\' keyword before \'next\'");
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-
-int
-stateP(void)
-{
-	if (amatch("print")) {
-		doPrint();
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-
-int
-stateR(void)
-{
-	if (amatch("repeat"))		doRepeat();
-	else if (amatch("return"))	doReturn();
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-stateS(void)
-{
-	if (amatch("switch")) {
-		doSwitch();
-	}
-	else if (pamatch("strlwr(")) {
-		doTransStr(0);
-		PutCode("%s;", strpop());
-	}
-	else if (pamatch("strnset(")) {
-		doTransStr(2);
-		PutCode("%s;", strpop());
-	}
-	else if (pamatch("strrev(")) {
-		doTransStr(0);
-		PutCode(";%s", strpop());
-	}
-	else if (pamatch("strset(")) {
-		doTransStr(1);
-		PutCode("%s;", strpop());
-	}
-	else if (pamatch("strupr(")) {
-		doTransStr(0);
-		PutCode("%s;", strpop());
-	}
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-
-int
-stateU(void)
-{
-	if (amatch("until")) {
-		PutErrorE("Missing \'repeat\'");
-	} else
-		return(FALSE);
-
-	return(TRUE);
-}
-
-int
-stateW(void)
-{
-	if (amatch("while"))	doWhile();
-	else
-		return(FALSE);
-
-	return(TRUE);
-}
-
 
 
 /*
@@ -753,7 +685,7 @@ doDefault(void)
  * char, int, floatå^íPèÉïœêîÇÃêÈåæ
  */
 void
-DeclareVar(int isGlobal, SCLASS class)
+DeclareVariable(int isGlobal, SCLASS class)
 {
 	SYMTBL* p;
 

@@ -153,7 +153,7 @@ void	doReturn(void);
 void	doSwitch(void);
 void	doCase(void);
 void	doDefault(void);
-void	DeclareVar(int, SCLASS);
+void	DeclareVariable(int, SCLASS);
 void	DeclareStr(int);
 int		GetConst(void);
 void	DeclareArray(int);
@@ -174,15 +174,9 @@ void	doInput_Variable(SYMTBL* p, int isGlobal);
 void	doLocate(void);
 
 FNCTBL* doFunctionCall(void);
-
-int		stateL(void);
-int		stateN(void);
-int		stateP(void);
-int		stateR(void);
-int		stateS(void);
-int		stateU(void);
-int		stateW(void);
 int		ParseRegularStatement(void);
+int		ParseSpecialStatement(void);
+void	doLinput(void);
 
 /*	 TABLE.C	 */
 void	InitTable(void);
