@@ -29,9 +29,6 @@
     <ClCompile Include="comp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="efunc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="exp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,6 +36,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="table.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="functions.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
