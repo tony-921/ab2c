@@ -28,7 +28,6 @@ int			locSymPtr;
 int			fncSymCnt;
 int			lblSymPtr;
 
-
 char*   ungetBuffer = NULL;		// unget for getNextLine()
 char	prgBuff[1000];	/* Read Buff for Input */
 char	preBuff[1000];	/* Write Buffer for pre-output */
@@ -343,10 +342,10 @@ PrintFunctionPrototype(void)
 	for (i = 0; i < fncSymCnt; i++) {
 		p = &fncSymTbl[i];
 
-		PutCode("%s\t%s(", TypeToStr(p->retClass), p->name);
+		PutCode("%s\t%s(", TypeToStr(p->retType), p->name);
 		if (p->pars == 0)	PutCode("void ");
 		for (j = 0; j < p->pars; j++) {
-			PrintType(p->parClass[j]);
+			PrintType(p->parTypes[j]);
 			if (j != p->pars - 1)	PutCode(",");
 		}
 		PutCode(");\n");
@@ -354,13 +353,13 @@ PrintFunctionPrototype(void)
 }
 
 char*
-TypeToStr(SCLASS type)
+TypeToStr(E_TYPE type)
 {
-	if (type == SC_VOID)		return "void ";
-	else if (type == SC_CHAR)	return "char";
-	else if (type == SC_INT)	return "int";
-	else if (type == SC_FLOAT)	return "double";
-	else if (type == SC_STR)	return "char *";
+	if (type == ET_VOID)		return "void ";
+	else if (type == ET_CHAR)	return "char";
+	else if (type == ET_INT)	return "int";
+	else if (type == ET_FLOAT)	return "double";
+	else if (type == ET_STR)	return "char *";
 
 	PutError("Undefined type %d", type);
 }
@@ -372,19 +371,19 @@ void
 PredecFunc(void)
 {
 	FNCTBL* p;
-	SCLASS	funcClass;
+	E_TYPE	funcType;
 
-	funcClass = SC_INT;
-	if (amatch("char"))		funcClass = SC_CHAR;
-	else if (amatch("int"))  funcClass = SC_INT;
-	else if (amatch("float"))funcClass = SC_FLOAT;
-	else if (amatch("str"))	funcClass = SC_STR;
+	funcType = ET_INT;
+	if (amatch("char"))		funcType = ET_CHAR;
+	else if (amatch("int"))  funcType = ET_INT;
+	else if (amatch("float"))funcType = ET_FLOAT;
+	else if (amatch("str"))	funcType = ET_STR;
 
 	SkipSpace();
 	p = DefFunc(TokenPtr);
 	TokenPtr += TokenLen(TokenPtr);
 
-	p->retClass = funcClass;
+	p->retType = funcType;
 	p->isDefined = FALSE;
 	p->pars = 0;
 
@@ -394,23 +393,17 @@ PredecFunc(void)
 		if (!isalpha(*TokenPtr)) break;
 		TokenPtr += TokenLen(TokenPtr);
 
-		p->parClass[p->pars] = SC_INT;
+		p->parTypes[p->pars] = ET_INT;
 		if (amatch(";")) {
 			if (amatch("int"));
-			else if (amatch("char"))  p->parClass[p->pars] = SC_CHAR;
-			else if (amatch("float")) p->parClass[p->pars] = SC_FLOAT;
-			else if (amatch("str"))	 p->parClass[p->pars] = SC_STR;
+			else if (amatch("char"))  p->parTypes[p->pars] = ET_CHAR;
+			else if (amatch("float")) p->parTypes[p->pars] = ET_FLOAT;
+			else if (amatch("str"))	 p->parTypes[p->pars] = ET_STR;
 			else SynErr();
 		}
 		p->pars++;
 	} while (amatch(","));
 	check(")");
-}
-
-void
-ungetNewLine(char*s)
-{
-	ungetBuffer = s;
 }
 
 /*
@@ -422,6 +415,7 @@ GetNewLine(void)
 	char* p;
 
 	preBuff[0] = '\0';
+	// FIXME- ungetBuffer no longer needed ?
 	if (ungetBuffer != NULL) {
 		TokenPtr = ungetBuffer;
 		ungetBuffer = NULL;

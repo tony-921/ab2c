@@ -7,4 +7,4 @@ Add optoin
 
 
 Replace SCLASS -> EXP_TYPE
-SC_INT	-> TYPE_INT ... etc
+ET_INT	-> TYPE_INT ... etc

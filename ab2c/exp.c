@@ -22,7 +22,7 @@ char	strBuffer[STR_BUFFER_SIZE];
 char* strStackPtr;
 
 extern	char* TokenPtr;
-extern	SCLASS	lastClass;
+extern	E_TYPE	lastType;
 extern	char	prgBuff[];
 extern	FILE* outputFp;
 extern	int		indent;
@@ -121,7 +121,7 @@ factor(void)
 	char	c;
 
 	if (aconst()) {
-		if (lastClass == SC_CHAR || lastClass == SC_INT) {
+		if (lastType == ET_CHAR || lastType == ET_INT) {
 			strpush("%d", vali);
 		}
 		else {
@@ -142,19 +142,19 @@ factor(void)
 	else if (amatch("-")) {
 		factor();
 		strpush("-%s", strpop());
-		if (lastClass == SC_STR) {
+		if (lastType == ET_STR) {
 			PutError("ïœêîÇÃå^Ç™à·Ç¢Ç‹Ç∑");
 		}
 	}
 	else if (amatch("\"")) {
-		lastClass = doString();
+		lastType = doString();
 	}
 	else if (efuncs()) {	/* ëgÇ›çûÇ›ä÷êî */
 	}
 	else if (c = TokenPtr[TokenLen(TokenPtr)], c == '(') {
 		FNCTBL* q;
 		q = doFunctionCall();
-		lastClass = q->retClass;
+		lastType = q->retType;
 	}
 	else SynErr();
 }
@@ -169,28 +169,28 @@ RefVariable(int isGlobal, SYMTBL* p)
 
 	TokenPtr += TokenLen(TokenPtr);
 
-	lastClass = p->class;
-	if (lastClass == SC_STR)	dim--;
+	lastType = p->type;
+	if (lastType == ET_STR)	dim--;
 
 	if (dim == 0) {	/* simple variable (not an array) */
 		strpush("%s", p->name);
-		if (p->class == SC_STR && amatch("[")) {
+		if (p->type == ET_STR && amatch("[")) {
 			/* str[0]ÇÃÇÊÇ§Ç»å`Å@Å®Å@CHARå^Ç∆ÇµÇƒàµÇ§ */
 			expression();
 			check("]");
 			sxb_strcat("[%s]", strpop());
-			lastClass = SC_CHAR;
+			lastType = ET_CHAR;
 		}
 	}
 	else if (amatch("(")) {
 		/* array variable */
 		DoIndexed(p);
-		lastClass = p->class;
-		if (p->class == SC_STR && amatch("[")) {
+		lastType = p->type;
+		if (p->type == ET_STR && amatch("[")) {
 			expression();
 			check("]");
 			sxb_strcat("[%s]", strpop());
-			lastClass = SC_CHAR;
+			lastType = ET_CHAR;
 		}
 	}
 	else
@@ -205,7 +205,7 @@ DoIndexed(SYMTBL* p)
 {
 	int	dim = p->dim;
 
-	if (p->class == SC_STR) dim = p->dim - 1;
+	if (p->type == ET_STR) dim = p->dim - 1;
 
 	/*	check("(");	ÇÕéñëOÇ…çsÇ¡ÇƒÇ¢ÇÈ */
 
@@ -227,11 +227,11 @@ DoIndexed(SYMTBL* p)
 void
 expression1(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 
 	factor();
-	classp = lastClass;
+	typep = lastType;
 
 	if (amatch("/*")) {
 		TokenPtr -= 2;
@@ -240,13 +240,13 @@ expression1(void)
 	while (1) {
 		if (amatch("*")) {
 			factor();
-			lastClass = ClassConvert(classp, lastClass);
+			lastType = PickAlignedType(typep, lastType);
 			p = strpop();
 			strpush("%s * %s", strpop(), p);
 		}
 		else if (amatch("/")) {
 			factor();
-			lastClass = ClassConvert(classp, lastClass);
+			lastType = PickAlignedType(typep, lastType);
 			p = strpop();
 			strpush("%s / %s", strpop(), p);
 		}
@@ -257,23 +257,23 @@ expression1(void)
 /*
  * ïœêîÇÃå^ÇçáÇπÇÈÅiêîílå^Åj
  */
-SCLASS
-ClassConvert(SCLASS class1, SCLASS class2)
+E_TYPE
+PickAlignedType(E_TYPE type1, E_TYPE type2)
 {
-	if (class1 == SC_CHAR || class1 == SC_INT) {
-		if (class2 == SC_CHAR || class2 == SC_INT) {
-			return(SC_INT);
+	if (type1 == ET_CHAR || type1 == ET_INT) {
+		if (type2 == ET_CHAR || type2 == ET_INT) {
+			return(ET_INT);
 		}
-		else if (class2 == SC_FLOAT) {
-			return(SC_FLOAT);
+		else if (type2 == ET_FLOAT) {
+			return(ET_FLOAT);
 		}
 	}
-	else if (class1 == SC_FLOAT) {
-		if (class2 == SC_CHAR || class2 == SC_INT) {
-			return(SC_FLOAT);
+	else if (type1 == ET_FLOAT) {
+		if (type2 == ET_CHAR || type2 == ET_INT) {
+			return(ET_FLOAT);
 		}
-		else if (class2 == SC_FLOAT) {
-			return(SC_FLOAT);
+		else if (type2 == ET_FLOAT) {
+			return(ET_FLOAT);
 		}
 	}
 	PutError("Invalid variable type");
@@ -282,12 +282,12 @@ ClassConvert(SCLASS class1, SCLASS class2)
 /*
  * ïœêîÇÃå^ÇçáÇπÇÈÅiï∂éöóÒå^Åj
  */
-SCLASS
-ClassConvertS(SCLASS class1, SCLASS class2)
+E_TYPE
+PickAlignedTypeS(E_TYPE type1, E_TYPE type2)
 {
-	if (class1 == SC_STR) {
-		if (class2 == SC_STR) {
-			return(SC_STR);
+	if (type1 == ET_STR) {
+		if (type2 == ET_STR) {
+			return(ET_STR);
 		}
 	}
 	PutError("Invalid variable type");
@@ -297,16 +297,16 @@ ClassConvertS(SCLASS class1, SCLASS class2)
  * ïÇìÆè¨êîì_å^Ç≈Ç†ÇÍÇŒêÆêîå^Ç…Ç∑ÇÈ
  */
 void
-ToInt1(SCLASS class)
+ToInt1(E_TYPE type)
 {
-	if (class == SC_STR)
+	if (type == ET_STR)
 		PutError("ïœêîÇÃå^Ç™à·Ç¢Ç‹Ç∑");
 }
 
 void
-ToInt2(SCLASS class1, SCLASS class2)
+ToInt2(E_TYPE type1, E_TYPE type2)
 {
-	if (class1 == SC_STR || class2 == SC_STR)
+	if (type1 == ET_STR || type2 == ET_STR)
 		PutError("ïœêîÇÃå^Ç™à·Ç¢Ç‹Ç∑");
 }
 
@@ -314,23 +314,23 @@ ToInt2(SCLASS class1, SCLASS class2)
 ** êÆêîå^Ç≈Ç†ÇÍÇŒïÇìÆè¨êîì_å^Ç…Ç∑ÇÈ
 */
 void
-ToFloat1(SCLASS class)
+ToFloat1(E_TYPE type)
 {
-	if (class == SC_STR)
+	if (type == ET_STR)
 		PutError("ïœêîÇÃå^Ç™à·Ç¢Ç‹Ç∑");
 }
 
 void
-ToFloat2(SCLASS class1, SCLASS class2)
+ToFloat2(E_TYPE type1, E_TYPE type2)
 {
-	if (class1 == SC_STR || class2 == SC_STR)
+	if (type1 == ET_STR || type2 == ET_STR)
 		PutError("ïœêîÇÃå^Ç™à·Ç¢Ç‹Ç∑");
 }
 
 void
-ToStr1(SCLASS class)
+ToStr1(E_TYPE type)
 {
-	if (class != SC_STR)
+	if (type != ET_STR)
 		PutError("ïœêîÇÃå^Ç™à·Ç¢Ç‹Ç∑");
 }
 
@@ -338,14 +338,14 @@ ToStr1(SCLASS class)
 ** éÆÇÃÉLÉÉÉXÉeÉBÉìÉOÇçsÇ»Ç§
 */
 void
-doCast(SCLASS class)
+doCast(E_TYPE type)
 {
-	if (class == SC_CHAR || class == SC_INT) ToInt1(lastClass);
-	else if (class == SC_FLOAT)		ToFloat1(lastClass);
-	else if (class == SC_STR)		ToStr1(lastClass);
+	if (type == ET_CHAR || type == ET_INT) ToInt1(lastType);
+	else if (type == ET_FLOAT)		ToFloat1(lastType);
+	else if (type == ET_STR)		ToStr1(lastType);
 	else PutError("ïœêîÇÃå^Ç™à·Ç¢Ç‹Ç∑");
 
-	lastClass = class;
+	lastType = type;
 }
 
 /*
@@ -354,15 +354,15 @@ doCast(SCLASS class)
 void
 expression2(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 
 	expression1();
-	classp = lastClass;
+	typep = lastType;
 	while (amatch("\\")) {
 		expression1();
-		ToInt2(classp, lastClass);
-		lastClass = SC_INT;
+		ToInt2(typep, lastType);
+		lastType = ET_INT;
 		p = strpop();
 		strpush("%s %% %s", strpop(), p);
 	}
@@ -374,14 +374,14 @@ expression2(void)
 void
 expression3(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 
 	expression2();
-	classp = lastClass;
+	typep = lastType;
 	while (amatch("mod ")) {
 		expression2();
-		lastClass = ClassConvert(classp, lastClass);
+		lastType = PickAlignedType(typep, lastType);
 		p = strpop();
 		strpush("%s %% %s", strpop(), p);
 	}
@@ -394,22 +394,22 @@ expression3(void)
 void
 expression4(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 	bool	isStrAddUsed = FALSE;
 
 	expression3();
-	classp = lastClass;
+	typep = lastType;
 
 	while (1) {
 		if (amatch("+")) {
-			if (lastClass == SC_STR) {
+			if (lastType == ET_STR) {
 				if (isStrAddUsed == FALSE) {
 					strpush("_sxb_add(%s", strpop());
 					isStrAddUsed = TRUE;
 				}
 				expression3();
-				ToStr1(lastClass);
+				ToStr1(lastType);
 				p = strpop();
 				strpush("%s, %s", strpop(), p);
 			}
@@ -421,13 +421,13 @@ expression4(void)
 		}
 		else if (amatch("-")) {
 			expression3();
-			lastClass = ClassConvert(classp, lastClass);
+			lastType = PickAlignedType(typep, lastType);
 			p = strpop();
 			strpush("%s - %s", strpop(), p);
 		}
 		else break;
 	}
-	if (lastClass == SC_STR && isStrAddUsed)
+	if (lastType == ET_STR && isStrAddUsed)
 		strpush("%s,-1)", strpop());
 }
 
@@ -437,26 +437,26 @@ expression4(void)
 void
 expression5(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 
 	expression4();
-	classp = lastClass;
+	typep = lastType;
 
 	while (1) {
 		if (amatch("shr ")) {
 			expression4();
-			ToInt2(classp, lastClass);
+			ToInt2(typep, lastType);
 			p = strpop();
 			strpush("%s >> %s", strpop(), p);
-			lastClass = SC_INT;
+			lastType = ET_INT;
 		}
 		else if (amatch("shl ")) {
 			expression4();
-			ToInt2(classp, lastClass);
+			ToInt2(typep, lastType);
 			p = strpop();
 			strpush("%s << %s", strpop(), p);
-			lastClass = SC_INT;
+			lastType = ET_INT;
 		}
 		else break;
 	}
@@ -468,71 +468,71 @@ expression5(void)
 void
 expression6(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 
 	expression5();
-	classp = lastClass;
+	typep = lastType;
 
 	if (amatch("<=")) {
 		expression5();
 		p = strpop();
-		if (classp == SC_STR && lastClass == SC_STR) {
+		if (typep == ET_STR && lastType == ET_STR) {
 			strpush("sxb_strcmpLE(%s, %s)", strpop(), p);
 		}
 		else {
-			lastClass = ClassConvert(classp, lastClass);
+			lastType = PickAlignedType(typep, lastType);
 			strpush("%s <= %s", strpop(), p);
 		}
 	}
 	else if (amatch(">=")) {
 		expression5();
 		p = strpop();
-		if (classp == SC_STR && lastClass == SC_STR) {
+		if (typep == ET_STR && lastType == ET_STR) {
 			strpush("_sxb_strcmpGE(%s,%s)", strpop(), p);
 		}
 		else {
 			strpush("%s >= %s", strpop(), p);
-			lastClass = ClassConvert(classp, lastClass);
+			lastType = PickAlignedType(typep, lastType);
 		}
 	}
 	else if (amatch("!=") || amatch("<>")) {
 		expression5();
 		p = strpop();
-		if (classp == SC_STR && lastClass == SC_STR) {
+		if (typep == ET_STR && lastType == ET_STR) {
 			strpush("_sxb_strcmpNE(%s,%s)", strpop(), p);
 		}
 		else {
 			strpush("%s != %s", strpop(), p);
-			lastClass = ClassConvert(classp, lastClass);
+			lastType = PickAlignedType(typep, lastType);
 		}
 	}
 	else if (amatch("<")) {
 		expression5();
 		p = strpop();
-		if (classp == SC_STR && lastClass == SC_STR) {
+		if (typep == ET_STR && lastType == ET_STR) {
 			strpush("_sxb_strcmpLT(%s,%s)", strpop(), p);
 		}
 		else {
 			strpush("%s < %s", strpop(), p);
-			lastClass = ClassConvert(classp, lastClass);
+			lastType = PickAlignedType(typep, lastType);
 		}
 	}
 	else if (amatch(">")) {
 		expression5();
 		p = strpop();
-		if (classp == SC_STR && lastClass == SC_STR) {
+		if (typep == ET_STR && lastType == ET_STR) {
 			strpush("_sxb_strcmpGT(%s,%s)", strpop(), p);
 		}
 		else {
 			strpush("%s > %s", strpop(), p);
-			lastClass = ClassConvert(classp, lastClass);
+			lastType = PickAlignedType(typep, lastType);
 		}
 	}
 	else if (amatch("==") | amatch("=")) {
 		expression5();
 		p = strpop();
-		if (classp == SC_STR && lastClass == SC_STR) {
+		if (typep == ET_STR && lastType == ET_STR) {
 			strpush("_sxb_strcmpEQ(%s,%s)", strpop(), p);
 		}
 		else {
@@ -540,7 +540,7 @@ expression6(void)
 		}
 	}
 	else	return;
-	lastClass = SC_INT;
+	lastType = ET_INT;
 }
 
 /*
@@ -555,9 +555,9 @@ expression7(void)
 		}
 		else {
 			expression7();
-			ToInt1(lastClass);
+			ToInt1(lastType);
 			strpush("!(%s)", strpop());
-			lastClass = SC_INT;
+			lastType = ET_INT;
 			return;
 		}
 	}
@@ -570,11 +570,11 @@ expression7(void)
 void
 expression8(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 
 	expression7();
-	classp = lastClass;
+	typep = lastType;
 
 	while (amatch("and")) {
 		if (isalnum(*TokenPtr)) {	/* andaÇÕïœêîñº */
@@ -582,10 +582,10 @@ expression8(void)
 			break;
 		}
 		expression7();
-		ToInt2(classp, lastClass);
+		ToInt2(typep, lastType);
 		p = strpop();
 		strpush("(%s) & (%s)", strpop(), p);
-		lastClass = SC_INT;
+		lastType = ET_INT;
 	}
 }
 
@@ -595,11 +595,11 @@ expression8(void)
 void
 expression9(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 
 	expression8();
-	classp = lastClass;
+	typep = lastType;
 
 	while (amatch("or")) {
 		if (isalnum(*TokenPtr)) {	/* oraÇÕïœêîñº */
@@ -607,10 +607,10 @@ expression9(void)
 			break;
 		}
 		expression8();
-		ToInt2(classp, lastClass);
+		ToInt2(typep, lastType);
 		p = strpop();
 		strpush("(%s) | (%s)", strpop(), p);
-		lastClass = SC_INT;
+		lastType = ET_INT;
 	}
 }
 
@@ -620,11 +620,11 @@ expression9(void)
 void
 expression(void)
 {
-	SCLASS	classp;
+	E_TYPE	typep;
 	char* p;
 
 	expression9();
-	classp = lastClass;
+	typep = lastType;
 
 	while (amatch("xor")) {
 		if (isalnum(*TokenPtr)) {	/* xoraÇÕïœêîñº */
@@ -632,10 +632,10 @@ expression(void)
 			break;
 		}
 		expression9();
-		ToInt2(classp, lastClass);
+		ToInt2(typep, lastType);
 		p = strpop();
 		strpush("%s ^ %s", strpop(), p);
-		lastClass = SC_INT;
+		lastType = ET_INT;
 	}
 }
 
@@ -643,7 +643,7 @@ expression(void)
 /*
  *Å@ï∂éöóÒÇÃèàóù
  */
-SCLASS
+E_TYPE
 doString(void)
 {
 	char	tmpBuff[1000];
@@ -659,7 +659,7 @@ doString(void)
 	*p++ = *TokenPtr++;		/* "ÇÉXÉLÉbÉv */
 	*p++ = '\0';
 	strpush("%s", tmpBuff);	/* ""Ç∆Ç©%dÇ∆Ç©Çí Ç∑ÇΩÇﬂ */
-	return(SC_STR);
+	return(ET_STR);
 }
 
 void
@@ -747,7 +747,7 @@ GetOctNum(void)
 
 	while ('0' <= *TokenPtr && *TokenPtr <= '7')
 		vali = vali * 8 + (*TokenPtr++ - '0');
-	lastClass = SC_INT;
+	lastType = ET_INT;
 }
 
 void
@@ -764,7 +764,7 @@ GetBinNum(void)
 		else
 			break;
 	}
-	lastClass = SC_INT;
+	lastType = ET_INT;
 }
 
 void
@@ -779,7 +779,7 @@ GetHexNum(void)
 		else if ('A' <= *TokenPtr && *TokenPtr <= 'F')
 			vali = vali * 16 + (*TokenPtr++ - 'A' + 10);
 	}
-	lastClass = SC_INT;
+	lastType = ET_INT;
 }
 
 void
@@ -787,7 +787,7 @@ GetChrNum(void)
 {
 	vali = *TokenPtr++;
 	check("\'");
-	lastClass = SC_INT;
+	lastType = ET_INT;
 }
 
 void
@@ -800,7 +800,7 @@ GetDecNum(void)
 		vali = vali * 10 + (*TokenPtr++ - '0');
 	}
 	if (amatch(".")) {	/* ïÇìÆè¨êîì_å^ */
-		lastClass = SC_FLOAT;
+		lastType = ET_FLOAT;
 		valf = atof(ptr);
 		while (isdigit(*TokenPtr)) TokenPtr++;
 		if (amatch("e+") || amatch("E+") || amatch("e-") || amatch("E-"))
@@ -808,19 +808,19 @@ GetDecNum(void)
 		vali = 0;
 	}
 	else if (amatch("e") || amatch("E")) {	/* ïÇìÆè¨êîì_å^ */
-		lastClass = SC_FLOAT;
+		lastType = ET_FLOAT;
 		valf = atof(ptr);
 		if (!amatch("-")) amatch("+");
 		while (isdigit(*TokenPtr)) TokenPtr++;
 		vali = 0;
 	}
 	else if (amatch("#")) {	/* ïÇìÆè¨êîì_å^ */
-		lastClass = SC_FLOAT;
+		lastType = ET_FLOAT;
 		valf = (double)vali;
 		vali = 0;
 	}
 	else {			/* êÆêîå^ */
-		lastClass = SC_INT;
+		lastType = ET_INT;
 		valf = 0.0;
 	}
 }

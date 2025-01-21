@@ -17,33 +17,32 @@
 typedef	char	bool;
 #define	LABEL_LEN	30
 
+// Expression Type
 typedef	enum {
-	SC_NONE,
-	SC_CHAR,
-	SC_INT,
-	SC_FLOAT,
-	SC_STR,
-	SC_VOID,
-
-	SC_OPTIONAL = 0x80		// marker for optional parameters. (e.g. 3rd parameter for "locate")
-} SCLASS;
+	ET_NONE,
+	ET_CHAR,
+	ET_INT,
+	ET_FLOAT,
+	ET_STR,
+	ET_VOID,
+} E_TYPE;
 
 /* Table record for variable */
 typedef	struct	symtbl {
 	char	name[LABEL_LEN];
-	SCLASS	class;
+	E_TYPE	type;
 	int	dim;		/* 変数の次元		*/
 	int	size[4];	/* 配列は３次元まで (1-origin, max=4 */
-}	SYMTBL;
+} SYMTBL;
 
 /* Table record for functions */
 typedef	struct	fnctbl {
 	char	name[LABEL_LEN];
-	SCLASS	retClass;		/* return type */
+	E_TYPE	retType;		/* return type */
 	int		pars;			/* num of parameters */
-	SCLASS	parClass[10];
+	E_TYPE	parTypes[10];
 	bool	isDefined;
-}	FNCTBL;
+} FNCTBL;
 
 /* Table record for labels */
 typedef struct	lbltbl {
@@ -56,24 +55,24 @@ typedef struct deffunctions {
 	char	*b_name;		/* keyword in basic */
 	char	*c_name;		/* name in c language */
 	int		numParams;
-	SCLASS	retClass;		/* return type (function only) */
-	SCLASS	param1;
-	SCLASS	param2;
-	SCLASS	param3;
-	SCLASS	param4;
+	E_TYPE	retType;		/* return type (function only) */
+	E_TYPE	param1;
+	E_TYPE	param2;
+	E_TYPE	param3;
+	E_TYPE	param4;
 } DEF_FUNCTIONS;
 
-#define DEF_FUNC0(BNAME, CNAME, R)			{ BNAME, CNAME, 0, R, SC_NONE, SC_NONE, SC_NONE, SC_NONE }
-#define DEF_FUNC1(BNAME, CNAME, R, P1)		{ BNAME, CNAME, 1, R, P1, SC_NONE,SC_NONE, SC_NONE }
-#define DEF_FUNC2(BNAME, CNAME, R, P1, P2)	{ BNAME, CNAME, 2, R, P1, P2, SC_NONE, SC_NONE }
-#define DEF_FUNC3(BNAME, CNAME, R, P1, P2, P3)	{ BNAME, CNAME, 3, R, P1, P2, P3, SC_NONE }
+#define DEF_FUNC0(BNAME, CNAME, R)			{ BNAME, CNAME, 0, R, ET_NONE, ET_NONE, ET_NONE, ET_NONE }
+#define DEF_FUNC1(BNAME, CNAME, R, P1)		{ BNAME, CNAME, 1, R, P1, ET_NONE,ET_NONE, ET_NONE }
+#define DEF_FUNC2(BNAME, CNAME, R, P1, P2)	{ BNAME, CNAME, 2, R, P1, P2, ET_NONE, ET_NONE }
+#define DEF_FUNC3(BNAME, CNAME, R, P1, P2, P3)	{ BNAME, CNAME, 3, R, P1, P2, P3, ET_NONE }
 #define DEF_FUNC4(BNAME, CNAME, R, P1, P2, P3)	{ BNAME, CNAME, 3, R, P1, P2, P3, P4 }
 
-#define STATEMENT0(BNAME, CNAME)			{ BNAME, CNAME, 0, SC_NONE, SC_NONE, SC_NONE, SC_NONE, SC_NONE }
-#define STATEMENT1(BNAME, CNAME, P1)		{ BNAME, CNAME, 1, SC_NONE, P1, SC_NONE,SC_NONE, SC_NONE }
-#define STATEMENT2(BNAME, CNAME, P1, P2)	{ BNAME, CNAME, 2, SC_NONE, P1, P2, SC_NONE, SC_NONE }
-#define STATEMENT3(BNAME, CNAME, P1, P2, P3)	{ BNAME, CNAME, 3, SC_NONE, P1, P2, P3, SC_NONE }
-#define STATEMENT4(BNAME, CNAME, P1, P2, P3, P4)	{ BNAME, CNAME, 2, SC_NONE, P1, P2, P3, P4 }
+#define STATEMENT0(BNAME, CNAME)			{ BNAME, CNAME, 0, ET_NONE, ET_NONE, ET_NONE, ET_NONE, ET_NONE }
+#define STATEMENT1(BNAME, CNAME, P1)		{ BNAME, CNAME, 1, ET_NONE, P1, ET_NONE,ET_NONE, ET_NONE }
+#define STATEMENT2(BNAME, CNAME, P1, P2)	{ BNAME, CNAME, 2, ET_NONE, P1, P2, ET_NONE, ET_NONE }
+#define STATEMENT3(BNAME, CNAME, P1, P2, P3)	{ BNAME, CNAME, 3, ET_NONE, P1, P2, P3, ET_NONE }
+#define STATEMENT4(BNAME, CNAME, P1, P2, P3, P4)	{ BNAME, CNAME, 2, ET_NONE, P1, P2, P3, P4 }
 
 
 #define	GLOBAL_TABLE_SIZE	100
@@ -94,13 +93,13 @@ void	factor(void);
 void	RefVariable(int isGlobal, SYMTBL* p);
 void	DoIndexed(SYMTBL* p);
 void	expression1(void);
-SCLASS	ClassConvert(SCLASS class1, SCLASS class2);
-void	ToInt1(SCLASS class);
-void	ToInt2(SCLASS class1, SCLASS class2);
-void	ToFloat1(SCLASS class);
-void	ToFloat2(SCLASS class1, SCLASS class2);
-void	ToStr1(SCLASS class);
-void	doCast(SCLASS class);
+E_TYPE	PickAlignedType(E_TYPE type1, E_TYPE type2);
+void	ToInt1(E_TYPE type);
+void	ToInt2(E_TYPE type1, E_TYPE type2);
+void	ToFloat1(E_TYPE type);
+void	ToFloat2(E_TYPE type1, E_TYPE type2);
+void	ToStr1(E_TYPE type);
+void	doCast(E_TYPE type);
 void	expression2(void);
 void	expression3(void);
 void	expression4(void);
@@ -110,12 +109,11 @@ void	expression7(void);
 void	expression8(void);
 void	expression9(void);
 void	expression(void);
-SCLASS	doString(void);
+E_TYPE	doString(void);
 void	SkipSpace(void);
 int		amatch(char* s);
 int		famatch(char* s);
 int		pamatch(char* s);
-void	ungetNewLine(char* s);
 int		GetNewLine(void);
 int		aconst(void);
 void	GetOctNum(void);
@@ -123,10 +121,7 @@ void	GetBinNum(void);
 void	GetHexNum(void);
 void	GetChrNum(void);
 void	GetDecNum(void);
-// void	linList(int);
-// void	PutDirectBuff(void);
-// void	PutStyleData(void**, int);
-SCLASS	ClassConvertS(SCLASS, SCLASS);
+E_TYPE	PickAlignedTypeS(E_TYPE type1, E_TYPE type2);
 char* strpop(void);
 void	strpush(char*, ...);
 void	sxb_strcat(char*, ...);
@@ -148,16 +143,16 @@ void	doRepeat(void);
 void	doFor(void);
 void	doPrint(void);
 void	doUsing(void);
-int		endOfLine(void);
+int		IsEndOfLine(void);
 void	doReturn(void);
 void	doSwitch(void);
 void	doCase(void);
 void	doDefault(void);
-void	DeclareVariable(int, SCLASS);
+void	DeclareVariable(int, E_TYPE);
 void	DeclareStr(int);
 int		GetConst(void);
 void	DeclareArray(int);
-void	InitArray(int, SCLASS, SYMTBL*);
+void	InitArray(int, E_TYPE, SYMTBL*);
 void	SubArrayVar(int, SYMTBL*);
 void	DeclareStrArray(int);
 void	InitStrArray(int, SYMTBL*);
@@ -165,7 +160,7 @@ void	SubArrayStr(int, SYMTBL*);
 int		parseFunction(void);
 
 void	DoParam(FNCTBL*);
-void	PrintType(SCLASS);
+void	PrintType(E_TYPE);
 void	doLabelDefinition(void);
 void	GetString(char*);
 void	doGoto(void);
@@ -197,7 +192,7 @@ LBLTBL* DefLabel(char*);
 LBLTBL* SearchUndefLabel(void);
 void	Pass1(void);
 void	Pass2(void);
-char* TypeToStr(SCLASS type);
+char* TypeToStr(E_TYPE type);
 void	PrintFunctionPrototype(void);
 void	PredecFunc(void);
 void	SkipLineNumber(void);
@@ -208,10 +203,10 @@ int		efuncs(void);
 void	doEcvt(void);
 void	doTransStr(int);
 void	doTransStrFunc(int);
-void	func0(SCLASS);
-void	func1(SCLASS ret, SCLASS p1);
-void	func2(SCLASS ret, SCLASS p1, SCLASS p2);
-void	func3(SCLASS ret , SCLASS p1, SCLASS p2, SCLASS p3);
+void	func0(E_TYPE);
+void	func1(E_TYPE ret, E_TYPE p1);
+void	func2(E_TYPE ret, E_TYPE p1, E_TYPE p2);
+void	func3(E_TYPE ret , E_TYPE p1, E_TYPE p2, E_TYPE p3);
 void	doFread(void);
 int		ParseRegularFunctions(void);
 int		ParseSpecialFunctions(void);

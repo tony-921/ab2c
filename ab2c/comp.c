@@ -14,8 +14,8 @@
 
 
 char* TokenPtr;
-SCLASS	casClass;			/* swict•¶‚ÅŽg‚í‚ê‚½•Ï”‚ÌŒ^ */
-SCLASS	retClass;			/* ŠÖ”‚Ì–ß‚è’l‚Ìƒ^ƒCƒv */
+E_TYPE	casType;			/* swict•¶‚ÅŽg‚í‚ê‚½•Ï”‚ÌŒ^ */
+E_TYPE	retType;			/* ŠÖ”‚Ì–ß‚è’l‚Ìƒ^ƒCƒv */
 
 int		indent = 0;			/* Indent depth of Output File */
 bool	inFunction;			/* ŠÖ”‚Ì’†‚© */
@@ -27,7 +27,7 @@ int		dfltLabel;
 
 
 extern	int		vali;
-extern	SCLASS	lastClass;
+extern	E_TYPE	lastType;
 
 extern	FILE* inputFp, * outputFp;
 extern	char	prgBuff[];
@@ -54,8 +54,8 @@ Compile(void)
 		PutCode("\n");
 		do {
 			parseStatement();
-		} while (amatch(":") && !endOfLine());
-		if (!endOfLine()) SynErr();
+		} while (amatch(":") && !IsEndOfLine());
+		if (!IsEndOfLine()) SynErr();
 	} while (GetNewLine());
 
 	if (isFirstFunc) {	/* ŠÖ”‚ªˆê‚Â‚à‚È‚©‚Á‚½Žž */
@@ -103,17 +103,16 @@ parseVariableDeclarations(int isGlobal)
 		do {
 			if (amatch("dim"))	 DeclareArray(isGlobal);
 			else if (famatch("int ") || famatch("int\t"))
-				DeclareVariable(isGlobal, SC_INT);
+				DeclareVariable(isGlobal, ET_INT);
 			else if (famatch("char ") || famatch("char\t"))
-				DeclareVariable(isGlobal, SC_CHAR);
+				DeclareVariable(isGlobal, ET_CHAR);
 			else if (famatch("float ") || famatch("float\t"))
-				DeclareVariable(isGlobal, SC_FLOAT);
+				DeclareVariable(isGlobal, ET_FLOAT);
 			else if (amatch("str ") || amatch("str\t")) {
 				PutCode("char\t");
 				DeclareStr(isGlobal);
 			}
 			else {
-//				ungetNewLine(TokenPtr);
 				return;
 			}
 			PutCode(";\n");
@@ -158,7 +157,7 @@ parseStatement(void)
 		else
 			PutError("Undefined Variable Error");
 	}
-	else if (endOfLine() == FALSE) {
+	else if (IsEndOfLine() == FALSE) {
 		SynErr();
 	}
 
@@ -265,10 +264,10 @@ doLinput(void)
 
 	SkipSpace();
 	expression();
-	if (lastClass == SC_NONE) {
+	if (lastType == ET_NONE) {
 		printf("FIXME - No prompt string");
 	} else {
-		ToStr1(lastClass);
+		ToStr1(lastType);
 		check(";");
 
 	}
@@ -281,7 +280,7 @@ doLinput(void)
 		PutError("–¢éŒ¾‚Ì•Ï”‚Å‚·");
 	}
 
-	if (p->class != SC_STR)	PutError("Invalid Variable Type");
+	if (p->type != ET_STR)	PutError("Invalid Variable Type");
 	// FIXME - Support variable string variable
 	if (p->dim != 1) PutError("Cannot use index variable here.");
 	TokenPtr += TokenLen(TokenPtr);
@@ -305,7 +304,7 @@ LoopStatement(char* key)
 {
 	indent++;
 	while (1) {
-		if (endOfLine()) {
+		if (IsEndOfLine()) {
 			if (GetNewLine() == FALSE)
 				PutError("Unexpected end of file error");
 			PutCode("\n");
@@ -314,8 +313,8 @@ LoopStatement(char* key)
 			if (amatch(key)) goto ret;
 			parseStatement();
 			if (amatch(key)) goto ret;
-		} while (amatch(":") && !endOfLine());
-		if (!endOfLine()) SynErr();
+		} while (amatch(":") && !IsEndOfLine());
+		if (!IsEndOfLine()) SynErr();
 	}
 ret:
 	indent--;
@@ -328,18 +327,18 @@ void
 doSubsutitute(int isGlobal, SYMTBL* p)
 {
 	int	dim = p->dim;
-	SCLASS	class = p->class;
+	E_TYPE	type = p->type;
 	char* q;
 
-	if (class == SC_STR)  dim--;
+	if (type == ET_STR)  dim--;
 	TokenPtr += TokenLen(TokenPtr);
 	if (dim == 0) {
 		/* ’Pƒ•Ï”‚Ö‚Ì‘ã“ü */
-		if (p->class == SC_STR) {
+		if (p->type == ET_STR) {
 			if (amatch("[")) {
 				/* sub[0] = 1‚Ì‚æ‚¤‚ÈŒ` */
 				expression();
-				ToInt1(lastClass);
+				ToInt1(lastType);
 				check("]");
 				check("=");
 				expression();	q = strpop();
@@ -355,7 +354,7 @@ doSubsutitute(int isGlobal, SYMTBL* p)
 			check("=");
 			expression();
 			PutCode("%s = %s", p->name, strpop());
-			lastClass = ClassConvert(p->class, lastClass);
+			lastType = PickAlignedType(p->type, lastType);
 		}
 	}
 	else {
@@ -368,7 +367,7 @@ doSubsutitute(int isGlobal, SYMTBL* p)
 			check("{");
 			for (i = 0; TRUE; i++) {
 				expression();
-				if (p->class == SC_STR) {
+				if (p->type == ET_STR) {
 					PutCode("strncpy(%s[%d],%s,%d)", p->name, i, strpop(), p->size[p->dim - 1]);
 				}
 				else {
@@ -387,8 +386,8 @@ doSubsutitute(int isGlobal, SYMTBL* p)
 			check("=");
 			expression();
 			q = strpop();
-			if (p->class == SC_STR) {
-				ToStr1(lastClass);
+			if (p->type == ET_STR) {
+				ToStr1(lastType);
 				PutCode("strncpy(%s,%s,%d)", strpop(), q, p->size[p->dim - 1]);
 			}
 			else {
@@ -426,12 +425,12 @@ doIf(void)
 	check("then");
 	PutCode("if(%s) {", strpop());
 	indent++;
-	do { parseStatement(); } while (amatch(":") && !endOfLine());
+	do { parseStatement(); } while (amatch(":") && !IsEndOfLine());
 	if (amatch("else")) {
 		indent--;
 		PutCode("} else {\n");
 		indent++;
-		do { parseStatement(); } while (amatch(":") && !endOfLine());
+		do { parseStatement(); } while (amatch(":") && !IsEndOfLine());
 	}
 	indent--;
 	PutCode("}");
@@ -493,13 +492,13 @@ doFor(void)
 	if (p = SearchLoc(TokenPtr)) {
 		TokenPtr += TokenLen(TokenPtr);
 		if (p->dim != 0) PutError("Array variale cannot be used here.");
-		if ((!p->class == SC_INT && p->class == SC_CHAR))
+		if ((!p->type == ET_INT && p->type == ET_CHAR))
 			PutError("Invalid variable type");
 	}
 	else if (p = SearchGlo(TokenPtr)) {
 		TokenPtr += TokenLen(TokenPtr);
 		if (p->dim != 0) PutError("Array variale cannot be used here.");
-		if ((!p->class == SC_INT && p->class == SC_CHAR))
+		if ((!p->type == ET_INT && p->type == ET_CHAR))
 			PutError("Invalid variable type");
 	}
 	else {
@@ -535,23 +534,23 @@ doPrint(void)
 	}
 	while (1) {
 		char* fmt = NULL;
-		if (endOfLine() || *TokenPtr == ':' || *TokenPtr == '}') {
+		if (IsEndOfLine() || *TokenPtr == ':' || *TokenPtr == '}') {
 			PutCode("_sxb_ltnl()\n");	/* ‰üs */
 			break;
 		}
 		expression();
 		strncpy(buff, strpop(), sizeof(buff));
-		switch (lastClass) {
-		case SC_CHAR:
+		switch (lastType) {
+		case ET_CHAR:
 			fmt = "%%c";
 			break;
-		case SC_INT:
+		case ET_INT:
 			fmt = "%%d";
 			break;
-		case SC_FLOAT:
+		case ET_FLOAT:
 			fmt = "%%f";
 			break;
-		case SC_STR:
+		case ET_STR:
 			// do NOT optimize printf("%s", "str") -> printf("str")
 			// as the 'str' may contains escape characters.
 			fmt = "%%s";
@@ -569,7 +568,7 @@ doPrint(void)
 		else if (amatch(";")) {
 			sprintf(s, "printf(\"%s\", %s);", fmt, buff);
 			PutCode(s);
-			if (endOfLine() || *TokenPtr == ':' || *TokenPtr == '}') break;
+			if (IsEndOfLine() || *TokenPtr == ':' || *TokenPtr == '}') break;
 			continue;
 		} else {
 			sprintf(s, "printf(\"%s\\n\", %s);", fmt, buff);
@@ -587,16 +586,16 @@ doUsing(void)
 	char* q;
 
 	expression();
-	doCast(SC_STR);
+	doCast(ET_STR);
 	check(";");
 	expression();
 	q = strpop();
 	PutCode("sxb_using(%s, %s);\n", strpop(), q);
-	if (lastClass == SC_STR) {
+	if (lastType == ET_STR) {
 		PutCode("TODO - Print string\n");
 	}
 	else {
-		ToFloat1(lastClass);
+		ToFloat1(lastType);
 		PutCode("TODO - Print float\n");
 	}
 }
@@ -605,7 +604,7 @@ doUsing(void)
 ** s‚ÌI‚í‚è‚©H
 */
 int
-endOfLine(void)
+IsEndOfLine(void)
 {
 	if (feof(inputFp)) return(TRUE);
 
@@ -624,15 +623,15 @@ doReturn(void)
 	if (inFunction == FALSE) {
 		PutError("\'return\' without a function");
 	}
-	if (endOfLine()) {
-		if (retClass != SC_VOID) {
+	if (IsEndOfLine()) {
+		if (retType != ET_VOID) {
 			PutError("Missing a return value");
 		}
 		PutCode("return;\n");
 	}
 	else {
 		expression();
-		doCast(retClass);
+		doCast(retType);
 		PutCode("return %s;\n", strpop());
 	}
 }
@@ -643,16 +642,16 @@ doReturn(void)
 void
 doSwitch(void)
 {
-	SCLASS	class = casClass;
+	E_TYPE	type = casType;
 
 	expression();
 	PutCode("switch(%s) {", strpop());
 
-	casClass = lastClass;
+	casType = lastType;
 
 	LoopStatement("endswitch");
 	PutCode("}\n");
-	casClass = class;
+	casType = type;
 }
 
 void
@@ -661,14 +660,14 @@ doCase(void)
 	expression();
 	PutCode("case %s:\n", strpop());
 
-	if (casClass == SC_CHAR || casClass == SC_INT) {
-		ToInt1(lastClass);
+	if (casType == ET_CHAR || casType == ET_INT) {
+		ToInt1(lastType);
 	}
-	else if (casClass == SC_FLOAT) {
-		ToFloat1(lastClass);
+	else if (casType == ET_FLOAT) {
+		ToFloat1(lastType);
 	}
-	else if (casClass == SC_STR) {
-		ToStr1(lastClass);
+	else if (casType == ET_STR) {
+		ToStr1(lastType);
 	}
 	else
 		SynErr();
@@ -685,7 +684,7 @@ doDefault(void)
  * char, int, floatŒ^’Pƒ•Ï”‚ÌéŒ¾
  */
 void
-DeclareVariable(int isGlobal, SCLASS class)
+DeclareVariable(int isGlobal, E_TYPE type)
 {
 	SYMTBL* p;
 
@@ -702,7 +701,7 @@ DeclareVariable(int isGlobal, SCLASS class)
 		PutCode(p->name);
 
 		TokenPtr += TokenLen(TokenPtr);
-		p->class = class;
+		p->type = type;
 		p->dim = 0;
 		p->size[0] = p->size[1] = p->size[2] = 0;
 		if (famatch("=")) {
@@ -710,7 +709,7 @@ DeclareVariable(int isGlobal, SCLASS class)
 			PutCode(strpop());
 		}
 		else if (amatch("(")) {
-			InitArray(isGlobal, class, p);
+			InitArray(isGlobal, type, p);
 		}
 	} while (famatch(","));
 }
@@ -730,7 +729,7 @@ DeclareStr(int isGlobal)
 		else 			p = DefLocVar(TokenPtr);
 		TokenPtr += TokenLen(TokenPtr);
 
-		p->class = SC_STR;
+		p->type = ET_STR;
 		p->dim = 1;
 		p->size[1] = p->size[2] = 0;
 		p->size[3] = 32;
@@ -747,7 +746,7 @@ DeclareStr(int isGlobal)
 		}
 		if (amatch("=")) {
 			expression();
-			ToStr1(lastClass);
+			ToStr1(lastType);
 			PutCode("= %s", strpop());
 		}
 	} while (famatch(","));
@@ -757,7 +756,7 @@ int
 GetConst(void)
 {
 	aconst();
-	if (lastClass != SC_INT)
+	if (lastType != ET_INT)
 		PutError("®”Œ^‚É‚µ‚Ä‰º‚³‚¢");
 	return(vali);
 }
@@ -768,12 +767,12 @@ GetConst(void)
 void
 DeclareArray(int isGlobal)
 {
-	SCLASS	class = SC_INT;
+	E_TYPE	type = ET_INT;
 	SYMTBL* p;
 
-	if (amatch("int"))	 class = SC_INT;
-	else if (amatch("char"))  class = SC_CHAR;
-	else if (amatch("float")) class = SC_FLOAT;
+	if (amatch("int"))	 type = ET_INT;
+	else if (amatch("char"))  type = ET_CHAR;
+	else if (amatch("float")) type = ET_FLOAT;
 	else if (amatch("str")) { DeclareStrArray(isGlobal); return; }
 
 	do {
@@ -788,7 +787,7 @@ DeclareArray(int isGlobal)
 
 		TokenPtr += TokenLen(TokenPtr);
 		check("(");
-		InitArray(isGlobal, class, p);
+		InitArray(isGlobal, type, p);
 	} while (famatch(","));
 }
 
@@ -796,13 +795,13 @@ DeclareArray(int isGlobal)
 ** ‚È‚É‚©ŠÖ”‚Ì•ª‚¯•û‚ª”¼’[‚¾‚¯‚Çcc
 */
 void
-InitArray(int isGlobal, SCLASS class, SYMTBL* p)
+InitArray(int isGlobal, E_TYPE type, SYMTBL* p)
 {
-	p->class = class;
+	p->type = type;
 	p->dim = 0;
 	p->size[0] = p->size[1] = p->size[2] = 0;
 
-	PutCode("%s %s", TypeToStr(p->class), p->name);
+	PutCode("%s %s", TypeToStr(p->type), p->name);
 
 	do {
 		p->size[p->dim] = GetConst();
@@ -828,15 +827,15 @@ SubArrayVar(int isGlobal, SYMTBL* p)
 	fcheck("{");
 
 	do {
-		while (endOfLine()) {		/* •¡”s‚É“n‚éê‡ */
+		while (IsEndOfLine()) {		/* •¡”s‚É“n‚éê‡ */
 			if (GetNewLine() == FALSE) SynErr();
 		}
 		if (max-- == 0) PutError("‰Šú‰»—v‘f‚ª‘½‚·‚¬‚Ü‚·");
 		expression();
 		PutCode(strpop());
-		if (p->class == SC_STR) SynErr();
+		if (p->type == ET_STR) SynErr();
 	} while (famatch(","));
-	while (endOfLine()) {		/* •¡”s‚É“n‚éê‡ */
+	while (IsEndOfLine()) {		/* •¡”s‚É“n‚éê‡ */
 		if (GetNewLine() == FALSE) SynErr();
 	}
 	fcheck("}");
@@ -872,7 +871,7 @@ DeclareStrArray(int isGlobal)
 void
 InitStrArray(int isGlobal, SYMTBL* p)
 {
-	p->class = SC_STR;
+	p->type = ET_STR;
 	p->dim = 0;
 	p->size[1] = p->size[2] = 0;
 	p->size[3] = 32;
@@ -913,16 +912,16 @@ SubArrayStr(int isGlobal, SYMTBL* p)
 	fcheck("{");
 
 	do {
-		while (endOfLine()) {		/* •¡”s‚É“n‚éê‡ */
+		while (IsEndOfLine()) {		/* •¡”s‚É“n‚éê‡ */
 			if (GetNewLine() == FALSE) SynErr();
 			PutCode("\n");
 		}
 		if (max-- == 0) PutError("‰Šú‰»—v‘f‚ª‘½‚·‚¬‚Ü‚·");
 		expression();
-		ToStr1(lastClass);
+		ToStr1(lastType);
 		PutCode(strpop());
 	} while (famatch(","));
-	if (endOfLine()) {		/* •¡”s‚É“n‚éê‡ */
+	if (IsEndOfLine()) {		/* •¡”s‚É“n‚éê‡ */
 		if (GetNewLine() == FALSE) SynErr();
 		PutCode("\n");
 	}
@@ -963,8 +962,8 @@ parseFunction(void)
 	}
 	p->isDefined = TRUE;
 
-	retClass = p->retClass;
-	PrintType(p->retClass);
+	retType = p->retType;
+	PrintType(p->retType);
 	PutCode(p->name);
 	TokenPtr += TokenLen(TokenPtr);
 
@@ -997,9 +996,9 @@ DoParam(FNCTBL* f)
 		i = 0;
 		do {
 			if (!isalpha(*TokenPtr)) SynErr();
-			PrintType(f->parClass[i]);
+			PrintType(f->parTypes[i]);
 			v = DefLocVar(TokenPtr);
-			v->class = SC_INT;
+			v->type = ET_INT;
 			v->dim = 0;
 
 			TokenPtr += TokenLen(TokenPtr);
@@ -1007,9 +1006,9 @@ DoParam(FNCTBL* f)
 
 			if (amatch(";")) {
 				if (amatch("int"));
-				else if (amatch("char"))	v->class = SC_CHAR;
-				else if (amatch("float"))	v->class = SC_FLOAT;
-				else if (amatch("str")) { v->class = SC_STR;	v->dim = 1; }
+				else if (amatch("char"))	v->type = ET_CHAR;
+				else if (amatch("float"))	v->type = ET_FLOAT;
+				else if (amatch("str")) { v->type = ET_STR;	v->dim = 1; }
 				else SynErr();
 			}
 			i++;
@@ -1020,7 +1019,7 @@ DoParam(FNCTBL* f)
 }
 
 void
-PrintType(SCLASS t)
+PrintType(E_TYPE t)
 {
 	char* s = TypeToStr(t);
 	PutCode("%s ", s);
@@ -1057,7 +1056,6 @@ doInput(void)
 	SYMTBL* p;
 	int	isGlobal = FALSE;
 	int	dim;
-	SCLASS	class;
 
 	doInput_Prompt();
 	SkipSpace();
@@ -1091,7 +1089,7 @@ doInput_Prompt(void)
 
 	// input <prompt>;<var>
 	if (amatch(",") || amatch(";")) {
-		ToStr1(lastClass);
+		ToStr1(lastType);
 		strncpy(buff, strpop(), sizeof(buff));
 		sprintf(s, "printf(%s);\n", buff);
 		PutCode(s);
@@ -1111,19 +1109,19 @@ void
 doInput_Variable(SYMTBL * p, int isGlobal)
 {
 	int	dim = p->dim;
-	int type = p->class;
+	int type = p->type;
 	char* fmt;
 	char buff[MAX_BUFF_SIZE] = "\0";
 	char s[MAX_BUFF_SIZE] = "\0";
 
-	if (type == SC_STR)  dim--;
-	if (p->class == SC_CHAR) {
+	if (type == ET_STR)  dim--;
+	if (p->type == ET_CHAR) {
 		fmt = "%c";
-	} else if (p->class == SC_INT) {
+	} else if (p->type == ET_INT) {
 		fmt = "%i";
-	} else if (p->class == SC_FLOAT) {
+	} else if (p->type == ET_FLOAT) {
 		fmt = "%f";
-	} else if (p->class == SC_STR) {
+	} else if (p->type == ET_STR) {
 		fmt = "%s";
 	}
 
@@ -1155,15 +1153,15 @@ doLocate(void)
 	char* p1, *p2;
 
 	expression();
-	doCast(SC_INT);
+	doCast(ET_INT);
 	check(",");
 
 	expression();
-	doCast(SC_INT);
+	doCast(ET_INT);
 
 	if (amatch(",")) {
 		expression();
-		doCast(SC_INT);
+		doCast(ET_INT);
 		p1 = strpop();
 		p2 = strpop();
 		PutCode("locate_3(%s,%s,%s)\n", strpop(), p2, p1);		// FIXME - check func with 3 params.
@@ -1192,7 +1190,7 @@ doFunctionCall(void)
 	if (!amatch(")")) {
 		while (1) {
 			expression();
-			doCast(p->parClass[paraCnt++]);
+			doCast(p->parTypes[paraCnt++]);
 			sxb_strcat(strpop());
 			if (amatch(",") == FALSE)	break;
 			sxb_strcat(",");
@@ -1210,25 +1208,25 @@ doFunctionCall(void)
 DEF_FUNCTIONS statementDefinitions[] = {
 
 	// regular functions
-	STATEMENT1("exit(", "exit(", SC_INT),
-	STATEMENT1("fclose(", "_sxb_fclose(", SC_INT),
+	STATEMENT1("exit(", "exit(", ET_INT),
+	STATEMENT1("fclose(", "_sxb_fclose(", ET_INT),
 	STATEMENT0("fcloseall(", "_sxb_fcloseall("),
-	STATEMENT1("fdelete(", "_sxb_fdelete(", SC_INT),
-	STATEMENT2("fputc(", "_sxb_fputc(", SC_CHAR, SC_INT),
-	STATEMENT2("frename(", "_sxb_frename(", SC_STR, SC_STR),
-	STATEMENT3("fseek(",   "_sxb_fseek(", SC_INT, SC_INT, SC_INT),
-	STATEMENT1("randomize(", "_sxb_randomize(", SC_INT),
-	STATEMENT1("srand(", "_sxb_srand(", SC_INT),
+	STATEMENT1("fdelete(", "_sxb_fdelete(", ET_INT),
+	STATEMENT2("fputc(", "_sxb_fputc(", ET_CHAR, ET_INT),
+	STATEMENT2("frename(", "_sxb_frename(", ET_STR, ET_STR),
+	STATEMENT3("fseek(",   "_sxb_fseek(", ET_INT, ET_INT, ET_INT),
+	STATEMENT1("randomize(", "_sxb_randomize(", ET_INT),
+	STATEMENT1("srand(", "_sxb_srand(", ET_INT),
 
 	// music functions
-	STATEMENT2("m_alloc(", "m_alloc(", SC_INT, SC_INT),
-	STATEMENT2("m_assign(", "m_assign(", SC_INT, SC_INT),
+	STATEMENT2("m_alloc(", "m_alloc(", ET_INT, ET_INT),
+	STATEMENT2("m_assign(", "m_assign(", ET_INT, ET_INT),
 	STATEMENT0("m_cont(", "m_cont("),
 	STATEMENT0("m_init(", "m_init("),
 	STATEMENT0("m_play(", "m_play("),
 	STATEMENT0("m_stop(", "m_stop("),
-	STATEMENT1("m_sysch(", "m_sysch(", SC_STR),
-	STATEMENT2("m_trk(", "m_trk(", SC_INT, SC_STR),
+	STATEMENT1("m_sysch(", "m_sysch(", ET_STR),
+	STATEMENT2("m_trk(", "m_trk(", ET_INT, ET_STR),
 };
 
 int
@@ -1239,10 +1237,10 @@ ParseRegularStatement(void) {
 		DEF_FUNCTIONS* f = &statementDefinitions[i];
 		if (amatch(f->b_name)) {
 			strpush(f->c_name);
-			if (f->numParams == 0)		func0(SC_NONE);
-			if (f->numParams == 1) 		func1(SC_NONE, f->param1);
-			if (f->numParams == 2) 		func2(SC_NONE, f->param1, f->param2);
-			if (f->numParams == 3)		func3(SC_NONE, f->param1, f->param2, f->param3);
+			if (f->numParams == 0)		func0(ET_NONE);
+			if (f->numParams == 1) 		func1(ET_NONE, f->param1);
+			if (f->numParams == 2) 		func2(ET_NONE, f->param1, f->param2);
+			if (f->numParams == 3)		func3(ET_NONE, f->param1, f->param2, f->param3);
 			if (f->numParams > 3)		PutError("Internal Error ParseRegularStatement %s %d", f->b_name, f->numParams);
 
 			PutCode("%s;", strpop());

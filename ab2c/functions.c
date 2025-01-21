@@ -14,7 +14,7 @@
 #include	"sxbasic.h"
 
 extern	char* TokenPtr;
-extern	SCLASS	lastClass;
+extern	E_TYPE	lastType;
 extern	FILE* outputFp;
 
 int
@@ -41,10 +41,10 @@ ParseSpecialFunctions(void)
 {
 	if (amatch("date$")) {
 		strpush("dataS()");
-		lastClass = SC_STR;
+		lastType = ET_STR;
 	} else if (amatch("day$")) {
 		strpush("dayS()");
-		lastClass = SC_STR;
+		lastType = ET_STR;
 	} else if (pamatch("ecvt(")) {
 		doEcvt();
 	} else if (pamatch("fcvt(")) {
@@ -61,22 +61,22 @@ ParseSpecialFunctions(void)
 	else if (amatch("freads(")) {
 		strpush("_sxb_freads(");
 		doTransStr(1);
-		lastClass = SC_INT;
+		lastType = ET_INT;
 	}
 	else if (amatch("inkey$(0)")) {
 		strpush("_sxb_inkey0()");
-		lastClass = SC_STR;
+		lastType = ET_STR;
 	}
 	else if (amatch("inkey$")) {
 		strpush("_sxb_inkey()");
-		lastClass = SC_STR;
+		lastType = ET_STR;
 	}
 	else if (pamatch("pi(")) {
 		if (amatch(")")) {
 			sxb_strcat("1)");
-			lastClass = SC_FLOAT;
+			lastType = ET_FLOAT;
 		} else {
-			func1(SC_FLOAT, SC_FLOAT);
+			func1(ET_FLOAT, ET_FLOAT);
 		}
 	}
 	else if (pamatch("strlwr(")) {
@@ -88,7 +88,7 @@ ParseSpecialFunctions(void)
 	else if (pamatch("strupr(")) 	doTransStrFunc(0);
 	else if (amatch("time$")) {
 		strpush("timeS()");
-		lastClass = SC_STR;
+		lastType = ET_STR;
 	} else
 		return(FALSE);
 
@@ -101,93 +101,93 @@ ParseSpecialFunctions(void)
 // regular functions
 DEF_FUNCTIONS funcDefinitions[] = {
 
-DEF_FUNC1("abs(", "abs(", SC_FLOAT, SC_FLOAT),
-DEF_FUNC1("asc(", "asc(", SC_INT, SC_STR),
-DEF_FUNC1("atoi(", "atoi(", SC_INT, SC_STR),
-DEF_FUNC1("atof(", "atof(", SC_FLOAT, SC_STR),
-DEF_FUNC1("atan(", "atan(", SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("abs(", "abs(", ET_FLOAT, ET_FLOAT),
+DEF_FUNC1("asc(", "asc(", ET_INT, ET_STR),
+DEF_FUNC1("atoi(", "atoi(", ET_INT, ET_STR),
+DEF_FUNC1("atof(", "atof(", ET_FLOAT, ET_STR),
+DEF_FUNC1("atan(", "atan(", ET_FLOAT, ET_FLOAT),
 
-DEF_FUNC1("bin$(", "_sxb_bin(", SC_STR, SC_INT),
+DEF_FUNC1("bin$(", "_sxb_bin(", ET_STR, ET_INT),
 
-DEF_FUNC1("chr$(", "_sxb_chrS(", SC_STR, SC_INT),
-DEF_FUNC1("cos(",  "cos(",		SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("chr$(", "_sxb_chrS(", ET_STR, ET_INT),
+DEF_FUNC1("cos(",  "cos(",		ET_FLOAT, ET_FLOAT),
 
-DEF_FUNC1("dskf(",	"dskf(",	SC_INT, SC_CHAR),
-// DEF_FUNC0("date$",	"dateS()",	SC_STR),
-// DEF_FUNC0("days$",	"days()",	SC_STR),
-DEF_FUNC1("exp(",	"exp(",		SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("dskf(",	"dskf(",	ET_INT, ET_CHAR),
+// DEF_FUNC0("date$",	"dateS()",	ET_STR),
+// DEF_FUNC0("days$",	"days()",	ET_STR),
+DEF_FUNC1("exp(",	"exp(",		ET_FLOAT, ET_FLOAT),
 
-DEF_FUNC1("fix(",	"fix(",	SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("fix(",	"fix(",	ET_FLOAT, ET_FLOAT),
 //		DEF_FUNC1("fcvt(")) doEcvt();
-DEF_FUNC1("fclose(", "fclose(", SC_INT, SC_INT),
-DEF_FUNC0("fcloseall(", "flocseall(", SC_INT),
+DEF_FUNC1("fclose(", "fclose(", ET_INT, ET_INT),
+DEF_FUNC0("fcloseall(", "flocseall(", ET_INT),
 
 //	'fread', 'fwrie' and 'freads' have the designated functions
-DEF_FUNC1("fdelete(", "TSDeleteP(", SC_INT, SC_STR),
-DEF_FUNC1("feof(", "feof(", SC_INT, SC_INT),
-DEF_FUNC1("fgetc(", "_sxb_fgetc(", SC_INT, SC_INT),
-DEF_FUNC2("fopen(", "_sxb_fopen(", SC_INT, SC_STR, SC_STR),
-DEF_FUNC2("fputc(", "_sxb_fputc(", SC_INT, SC_CHAR, SC_INT),
-DEF_FUNC2("frename(","_sxb_frename(", SC_INT, SC_STR, SC_STR),
-DEF_FUNC3("fseek(", "_sxb_fseek(",SC_INT, SC_INT, SC_INT, SC_INT),
-DEF_FUNC2("fwrites(","_sxb_fwrites(", SC_INT, SC_STR, SC_INT),
+DEF_FUNC1("fdelete(", "TSDeleteP(", ET_INT, ET_STR),
+DEF_FUNC1("feof(", "feof(", ET_INT, ET_INT),
+DEF_FUNC1("fgetc(", "_sxb_fgetc(", ET_INT, ET_INT),
+DEF_FUNC2("fopen(", "_sxb_fopen(", ET_INT, ET_STR, ET_STR),
+DEF_FUNC2("fputc(", "_sxb_fputc(", ET_INT, ET_CHAR, ET_INT),
+DEF_FUNC2("frename(","_sxb_frename(", ET_INT, ET_STR, ET_STR),
+DEF_FUNC3("fseek(", "_sxb_fseek(",ET_INT, ET_INT, ET_INT, ET_INT),
+DEF_FUNC2("fwrites(","_sxb_fwrites(", ET_INT, ET_STR, ET_INT),
 
-DEF_FUNC2("gcvt(", "gcvt(", SC_STR, SC_FLOAT, SC_INT),
+DEF_FUNC2("gcvt(", "gcvt(", ET_STR, ET_FLOAT, ET_INT),
 
-DEF_FUNC1("hex$(", "_sxb_hex(", SC_STR, SC_INT),
+DEF_FUNC1("hex$(", "_sxb_hex(", ET_STR, ET_INT),
 
 // inkey$
-DEF_FUNC1("int(", "int(", SC_INT, SC_FLOAT),
-DEF_FUNC1("itoa(", "itoa(", SC_STR, SC_INT),
-DEF_FUNC3("instr(", "instr(",SC_INT, SC_INT, SC_STR, SC_STR),
-DEF_FUNC1("isalnum(", "isalnum(", SC_INT, SC_CHAR),
-DEF_FUNC1("isalpha(", "isalpha(", SC_INT, SC_CHAR),
-DEF_FUNC1("isascii(", "isascii(", SC_INT, SC_CHAR),
-DEF_FUNC1("iscntrl(", "iscntrl(", SC_INT, SC_CHAR),
-DEF_FUNC1("isdigit(", "isdigit(", SC_INT, SC_CHAR),
-DEF_FUNC1("isgraph(", "isgraph(", SC_INT, SC_CHAR),
-DEF_FUNC1("islower(", "islower(", SC_INT, SC_CHAR),
-DEF_FUNC1("isprint(", "isprint(", SC_INT, SC_CHAR),
-DEF_FUNC1("ispunct(", "ispunct(", SC_INT, SC_CHAR),
-DEF_FUNC1("isspace(", "isspace(", SC_INT, SC_CHAR),
-DEF_FUNC1("isupper(", "isupper(", SC_INT, SC_CHAR),
-DEF_FUNC1("isxdigit(", "isxdigit(", SC_INT, SC_CHAR),
+DEF_FUNC1("int(", "int(", ET_INT, ET_FLOAT),
+DEF_FUNC1("itoa(", "itoa(", ET_STR, ET_INT),
+DEF_FUNC3("instr(", "instr(",ET_INT, ET_INT, ET_STR, ET_STR),
+DEF_FUNC1("isalnum(", "isalnum(", ET_INT, ET_CHAR),
+DEF_FUNC1("isalpha(", "isalpha(", ET_INT, ET_CHAR),
+DEF_FUNC1("isascii(", "isascii(", ET_INT, ET_CHAR),
+DEF_FUNC1("iscntrl(", "iscntrl(", ET_INT, ET_CHAR),
+DEF_FUNC1("isdigit(", "isdigit(", ET_INT, ET_CHAR),
+DEF_FUNC1("isgraph(", "isgraph(", ET_INT, ET_CHAR),
+DEF_FUNC1("islower(", "islower(", ET_INT, ET_CHAR),
+DEF_FUNC1("isprint(", "isprint(", ET_INT, ET_CHAR),
+DEF_FUNC1("ispunct(", "ispunct(", ET_INT, ET_CHAR),
+DEF_FUNC1("isspace(", "isspace(", ET_INT, ET_CHAR),
+DEF_FUNC1("isupper(", "isupper(", ET_INT, ET_CHAR),
+DEF_FUNC1("isxdigit(", "isxdigit(", ET_INT, ET_CHAR),
 
-DEF_FUNC1("len(", "len(", SC_INT, SC_STR),
-DEF_FUNC1("log(", "log(", SC_FLOAT, SC_FLOAT),
-DEF_FUNC2("left$(", "left$(", SC_STR, SC_STR, SC_INT),
+DEF_FUNC1("len(", "len(", ET_INT, ET_STR),
+DEF_FUNC1("log(", "log(", ET_FLOAT, ET_FLOAT),
+DEF_FUNC2("left$(", "left$(", ET_STR, ET_STR, ET_INT),
 
-DEF_FUNC3("mid$(", "_sxb_mid(", SC_STR, SC_STR, SC_INT, SC_INT),
-DEF_FUNC1("mirror$(", "_sxb_mirror(", SC_STR, SC_STR),
-DEF_FUNC1("mouse(", "mouse(", SC_CHAR, SC_INT),
+DEF_FUNC3("mid$(", "_sxb_mid(", ET_STR, ET_STR, ET_INT, ET_INT),
+DEF_FUNC1("mirror$(", "_sxb_mirror(", ET_STR, ET_STR),
+DEF_FUNC1("mouse(", "mouse(", ET_CHAR, ET_INT),
 
-DEF_FUNC1("oct$(", "_sxb_oct(", SC_STR, SC_INT),
-DEF_FUNC2("pow(", "pow(", SC_FLOAT, SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("oct$(", "_sxb_oct(", ET_STR, ET_INT),
+DEF_FUNC2("pow(", "pow(", ET_FLOAT, ET_FLOAT, ET_FLOAT),
 
-DEF_FUNC0("rnd(", "rnd(", SC_FLOAT),
-DEF_FUNC0("rand(", "rand(", SC_INT),
-DEF_FUNC2("right$(", "_sxb_rightS(", SC_STR, SC_STR, SC_INT),
+DEF_FUNC0("rnd(", "rnd(", ET_FLOAT),
+DEF_FUNC0("rand(", "rand(", ET_INT),
+DEF_FUNC2("right$(", "_sxb_rightS(", ET_STR, ET_STR, ET_INT),
 
 //
-DEF_FUNC1("str$(", "_sxb_str(", SC_STR, SC_FLOAT),
-DEF_FUNC1("sgn(", "sgn(", SC_FLOAT, SC_FLOAT),
-DEF_FUNC1("sin(", "sin(",SC_FLOAT, SC_FLOAT),
-DEF_FUNC1("sqr(", "sqr(", SC_FLOAT, SC_FLOAT),
-DEF_FUNC1("space$(", "_sxb_spaceS(", SC_STR, SC_INT),
-DEF_FUNC2("strchr(", "strchr(", SC_INT, SC_STR, SC_CHAR),
-DEF_FUNC2("strcspn(", "strcspn(", SC_INT, SC_STR, SC_STR),
-DEF_FUNC2("string$(", "_sxb_stringS(", SC_STR, SC_INT, SC_STR),
-DEF_FUNC1("strlen(", "strlen(", SC_INT, SC_STR),
-DEF_FUNC2("strrchr(", "strrchr(", SC_INT, SC_STR, SC_CHAR),
-DEF_FUNC2("strspn(", "strspn(", SC_INT, SC_STR, SC_STR),
-DEF_FUNC2("strtok(", "strtok(", SC_STR, SC_STR, SC_STR),
+DEF_FUNC1("str$(", "_sxb_str(", ET_STR, ET_FLOAT),
+DEF_FUNC1("sgn(", "sgn(", ET_FLOAT, ET_FLOAT),
+DEF_FUNC1("sin(", "sin(",ET_FLOAT, ET_FLOAT),
+DEF_FUNC1("sqr(", "sqr(", ET_FLOAT, ET_FLOAT),
+DEF_FUNC1("space$(", "_sxb_spaceS(", ET_STR, ET_INT),
+DEF_FUNC2("strchr(", "strchr(", ET_INT, ET_STR, ET_CHAR),
+DEF_FUNC2("strcspn(", "strcspn(", ET_INT, ET_STR, ET_STR),
+DEF_FUNC2("string$(", "_sxb_stringS(", ET_STR, ET_INT, ET_STR),
+DEF_FUNC1("strlen(", "strlen(", ET_INT, ET_STR),
+DEF_FUNC2("strrchr(", "strrchr(", ET_INT, ET_STR, ET_CHAR),
+DEF_FUNC2("strspn(", "strspn(", ET_INT, ET_STR, ET_STR),
+DEF_FUNC2("strtok(", "strtok(", ET_STR, ET_STR, ET_STR),
 
-DEF_FUNC1("toascii(", "toascii(", SC_INT, SC_CHAR),
-DEF_FUNC1("tolower(", "tolower(", SC_INT, SC_CHAR),
-DEF_FUNC1("toupper(", "toupper(", SC_INT, SC_CHAR),
-DEF_FUNC1("tan(", "tan(", SC_FLOAT, SC_FLOAT),
+DEF_FUNC1("toascii(", "toascii(", ET_INT, ET_CHAR),
+DEF_FUNC1("tolower(", "tolower(", ET_INT, ET_CHAR),
+DEF_FUNC1("toupper(", "toupper(", ET_INT, ET_CHAR),
+DEF_FUNC1("tan(", "tan(", ET_FLOAT, ET_FLOAT),
 
-DEF_FUNC1("val(", "val(", SC_FLOAT, SC_STR)
+DEF_FUNC1("val(", "val(", ET_FLOAT, ET_STR)
 };
 
 
@@ -199,10 +199,10 @@ ParseRegularFunctions(void) {
 		DEF_FUNCTIONS* f = &funcDefinitions[i];
 		if (amatch(f->b_name)) {
 			strpush(f->c_name);
-			if (f->numParams == 0) 	func0(f->retClass);
-			if (f->numParams == 1) 	func1(f->retClass, f->param1);
-			if (f->numParams == 2) 	func2(f->retClass, f->param1, f->param2);
-			if (f->numParams == 3)	func3(f->retClass, f->param1, f->param2, f->param3);
+			if (f->numParams == 0) 	func0(f->retType);
+			if (f->numParams == 1) 	func1(f->retType, f->param1);
+			if (f->numParams == 2) 	func2(f->retType, f->param1, f->param2);
+			if (f->numParams == 3)	func3(f->retType, f->param1, f->param2, f->param3);
 			if (f->numParams > 3)	PutError("Internal Error func_external %s %d", f->b_name, f->numParams);
 			return TRUE;
 		}
@@ -222,10 +222,10 @@ doEcvt(void)
 	char *q1, *q2;
 
 	expression();
-	ToFloat1(lastClass);
+	ToFloat1(lastType);
 	check(",");
 	expression();
-	ToInt1(lastClass);
+	ToInt1(lastType);
 
 	for (i = 0; i < 2; i++) {
 		check(",");
@@ -235,7 +235,7 @@ doEcvt(void)
 		else
 			PutError("–¢éŒ¾‚Ì•Ï”‚Å‚· !!");
 
-		if (p[i]->class != SC_INT || p[i]->dim != 0)
+		if (p[i]->type != ET_INT || p[i]->dim != 0)
 			PutError("•Ï”‚ÌŒ^‚ªˆá‚¢‚Ü‚·");
 		TokenPtr += TokenLen(TokenPtr);
 	}
@@ -243,7 +243,7 @@ doEcvt(void)
 	q1 = strpop();
 	q2 = strpop();
 	strpush("%s%s, %s, \&%s, \&%s)", strpop(), q2, q1, p[0]->name, p[1]->name);
-	lastClass = SC_STR;
+	lastType = ET_STR;
 }
 
 /*
@@ -267,7 +267,7 @@ doTransStr(int exps)
 	sxb_strcat("%s, sizeof(%s)", p->name, p->name);
 	TokenPtr += TokenLen(TokenPtr);
 
-	if (p->class != SC_STR)	PutError("•Ï”‚ÌŒ^‚ªˆá‚¢‚Ü‚·");
+	if (p->type != ET_STR)	PutError("•Ï”‚ÌŒ^‚ªˆá‚¢‚Ü‚·");
 
 	if (p->dim >= 2) {
 		check("(");
@@ -277,7 +277,7 @@ doTransStr(int exps)
 	while (exps--) {
 		check(",");
 		expression();
-		ToInt1(lastClass);
+		ToInt1(lastType);
 		sxb_strcat(" ,%s", strpop());
 	}
 	check(")");
@@ -291,40 +291,40 @@ void
 doTransStrFunc(int exps)
 {
 	doTransStr(exps);
-	lastClass = SC_STR;
+	lastType = ET_STR;
 }
 
 /*
 ** function with 0 parameter.
 */
 void
-func0( SCLASS ret)
+func0( E_TYPE ret)
 {
 	check(")");
 	sxb_strcat(")");
 
-	lastClass = ret;
+	lastType = ret;
 }
 
 /*
 ** parse a function with 1 paramter
 */
 void
-func1(SCLASS ret, SCLASS param1)
+func1(E_TYPE ret, E_TYPE param1)
 {
 	expression();
 	doCast(param1);
 	check(")");
 	sxb_strcat("%s)", strpop());
 
-	lastClass = ret;
+	lastType = ret;
 }
 
 /*
 ** parse a function with 2 paramters
 */
 void
-func2(SCLASS ret, SCLASS par1, SCLASS par2)
+func2(E_TYPE ret, E_TYPE par1, E_TYPE par2)
 {
 	char* p;
 
@@ -339,14 +339,14 @@ func2(SCLASS ret, SCLASS par1, SCLASS par2)
 	p = strpop();
 	sxb_strcat("%s,%s)", strpop(), p);
 
-	lastClass = ret;
+	lastType = ret;
 }
 
 /*
 ** Parse a function with 3 parameters
 */
 void
-func3(SCLASS ret, SCLASS par1, SCLASS par2, SCLASS par3)
+func3(E_TYPE ret, E_TYPE par1, E_TYPE par2, E_TYPE par3)
 {
 	char	*p, *q;
 
@@ -365,7 +365,7 @@ func3(SCLASS ret, SCLASS par1, SCLASS par2, SCLASS par3)
 	p = strpop();
 	q = strpop();
 	sxb_strcat("%s,%s,%s)", strpop(), q, p);
-	lastClass = ret;
+	lastType = ret;
 }
 
 /*
@@ -385,7 +385,7 @@ doFread(void)
 	TokenPtr += TokenLen(TokenPtr);
 	sxb_strcat(p->name);
 
-	if (p->class == SC_STR)  PutError("”’lŒ^‚Ì”z—ñ‚ðŽw’è‚µ‚Ä‰º‚³‚¢");
+	if (p->type == ET_STR)  PutError("”’lŒ^‚Ì”z—ñ‚ðŽw’è‚µ‚Ä‰º‚³‚¢");
 	if (p->dim == 0) PutError("‚PŽŸŒ³ˆÈã‚Ì”z—ñ‚ðŽw’è‚µ‚Ä‰º‚³‚¢");
 	else if (p->dim == 1);
 	else {
@@ -403,10 +403,10 @@ doFread(void)
 
 	check(",");
 	expression();	/* size */
-	ToInt1(lastClass);
+	ToInt1(lastType);
 	check(",");
 	expression();	/* fn */
-	ToInt1(lastClass);
+	ToInt1(lastType);
 	check(")");
 
 	q = strpop();

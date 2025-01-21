@@ -10,7 +10,7 @@
 
 
 FILE	*inputFp, *outputFp;
-SCLASS	lastClass;
+E_TYPE	lastType;
 
 bool	toSkipLineNumber = TRUE;
 
