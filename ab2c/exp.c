@@ -51,36 +51,12 @@ PutError(char* fmt, ...) {
 }
 
 /*
-** エラーメッセージを表示（コンパイル時）
-*/
-// FIXME : change back to PutError()
-volatile void
-PutErrorE(char* fmt, ...)
-{
-	char* p;
-	va_list	marker;
-
-	va_start(marker, fmt);
-
-	fprintf(stderr, "\n%s\n", prgBuff);
-	for (p = prgBuff; p < TokenPtr; p++) {
-		if (*p == '\t')	fprintf(stderr, "\t");
-		else			fprintf(stderr, " ");
-	}
-	fprintf(stderr, "^\n");
-	vfprintf(stderr, fmt, marker);
-	fprintf(stderr, "\n");
-
-	exit(-1);
-}
-
-/*
 ** 文法エラー
 */
 volatile void
 SynErr(void)
 {
-	PutErrorE("Syntax Error");
+	PutError("Syntax Error");
 }
 
 
@@ -95,7 +71,7 @@ check(char* s)
 
 	if (!amatch(s)) {
 		sprintf(buf, "keyword %s expected", s);
-		PutErrorE(buf);
+		PutError(buf);
 	}
 }
 
@@ -106,7 +82,7 @@ fcheck(char* s)
 
 	if (!amatch(s)) {
 		sprintf(buf, "Misisng Keyword : %s", s);
-		PutErrorE(buf);
+		PutError(buf);
 	}
 	PutCode(s);
 }

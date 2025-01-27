@@ -102,7 +102,7 @@ ParseSpecialFunctions(void)
 DEF_FUNCTIONS funcDefinitions[] = {
 
 DEF_FUNC1("abs(", "abs(", ET_FLOAT, ET_FLOAT),
-DEF_FUNC1("asc(", "asc(", ET_INT, ET_STR),
+DEF_FUNC1("asc(", "_sxb_ascS(", ET_INT, ET_STR),
 DEF_FUNC1("atoi(", "atoi(", ET_INT, ET_STR),
 DEF_FUNC1("atof(", "atof(", ET_FLOAT, ET_STR),
 DEF_FUNC1("atan(", "atan(", ET_FLOAT, ET_FLOAT),
@@ -123,7 +123,7 @@ DEF_FUNC1("fclose(", "fclose(", ET_INT, ET_INT),
 DEF_FUNC0("fcloseall(", "flocseall(", ET_INT),
 
 //	'fread', 'fwrie' and 'freads' have the designated functions
-DEF_FUNC1("fdelete(", "TSDeleteP(", ET_INT, ET_STR),
+DEF_FUNC1("fdelete(", "remove(", ET_INT, ET_STR),
 DEF_FUNC1("feof(", "feof(", ET_INT, ET_INT),
 DEF_FUNC1("fgetc(", "_sxb_fgetc(", ET_INT, ET_INT),
 DEF_FUNC2("fopen(", "_sxb_fopen(", ET_INT, ET_STR, ET_STR),
@@ -134,7 +134,7 @@ DEF_FUNC2("fwrites(","_sxb_fwrites(", ET_INT, ET_STR, ET_INT),
 
 DEF_FUNC2("gcvt(", "gcvt(", ET_STR, ET_FLOAT, ET_INT),
 
-DEF_FUNC1("hex$(", "_sxb_hex(", ET_STR, ET_INT),
+DEF_FUNC1("hex$(", "_sxb_hexS(", ET_STR, ET_INT),
 
 // inkey$
 DEF_FUNC1("int(", "int(", ET_INT, ET_FLOAT),
@@ -295,10 +295,10 @@ doTransStrFunc(int exps)
 }
 
 /*
-** function with 0 parameter.
+** parse a function with 0 parameter
 */
 void
-func0( E_TYPE ret)
+func0(E_TYPE ret)
 {
 	check(")");
 	sxb_strcat(")");

@@ -85,7 +85,6 @@ typedef struct deffunctions {
 
 /*	EXP.C	*/
 volatile void	PutError(char* s, ...);
-volatile void	PutErrorE(char* s, ...);
 volatile void	SynErr(void);
 void	check(char* s);
 void	fcheck(char* s);
@@ -191,7 +190,6 @@ SYMTBL* DefLocVar(char*);
 LBLTBL* DefLabel(char*);
 LBLTBL* SearchUndefLabel(void);
 void	Pass1(void);
-void	Pass2(void);
 char* TypeToStr(E_TYPE type);
 void	PrintFunctionPrototype(void);
 void	PredecFunc(void);

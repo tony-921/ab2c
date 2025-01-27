@@ -317,7 +317,6 @@ Pass1(void)
 	PutCode("#include\t<stdio.h>\n");
 	PutCode("#include\t<string.h>\n");
 	PutCode("#include\t\"ab2c_run.h\"\n");
-	PutCode("#include\t\"ab2c_var.h\"\n");
 
 	rewind(inputFp);
 	while (!feof(inputFp)) {
@@ -415,26 +414,20 @@ GetNewLine(void)
 	char* p;
 
 	preBuff[0] = '\0';
-	// FIXME- ungetBuffer no longer needed ?
-	if (ungetBuffer != NULL) {
-		TokenPtr = ungetBuffer;
-		ungetBuffer = NULL;
-	} else {
-		do {
-			if (feof(inputFp) || fgets(prgBuff, sizeof(prgBuff), inputFp) == NULL) {
-				prgBuff[0] = '\0';
-				return(FALSE);
-			}
+	do {
+		if (feof(inputFp) || fgets(prgBuff, sizeof(prgBuff), inputFp) == NULL) {
+			prgBuff[0] = '\0';
+			return(FALSE);
+		}
 
-			TokenPtr = prgBuff;
-			if (toSkipLineNumber) {
-				SkipLineNumber();
-			}
-			SkipSpace();
-		} while (amatch("/*") || *TokenPtr == '\n');
-		p = strstr(prgBuff, "\n");
-		if (p) *p = '\0';
-	}
+		TokenPtr = prgBuff;
+		if (toSkipLineNumber) {
+			SkipLineNumber();
+		}
+		SkipSpace();
+	} while (amatch("/*") || *TokenPtr == '\n');
+	p = strstr(prgBuff, "\n");
+	if (p) *p = '\0';
 
 	return(TRUE);
 }

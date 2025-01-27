@@ -1,31 +1,21 @@
 #include	<stdio.h>
 #include	<string.h>
 #include	"ab2c_run.h"
-#include	"ab2c_var.h"
-int x,y,k;
-int fn,fp,e;
-int R,G,B,I,g0;
-char buf[1537];
+int na[11],int nb[11];
+int fp1,fp2;
+int i;
 
 void _sxb_start(void) {
-	printf("%s\n", timeS());
-	fn = _sxb_fopen("test01.bmp","r");
-	fp = _sxb_fseek(fn,54,0);
-	for(y = 0; y <= 512 ;y++) {
-		e = _sxb_fread(buf, sizeof(buf), 512 * 3,fn);
-		for(x = 0; x <= 511 ;x++) {
-			k = x * 3;
-			B = (buf[k] >> 3) << 1;
-			g0 = buf[k + 1];
-			G = (g0 >> 3) << 11;
-			R = (buf[k + 2] >> 3) << 6;
-			I = ((g0) & (4)) == 4;
-		}
+	for(i = 0; i <= 10 ;i++) {
+		na[i] = i;
 	}
-	_sxb_fcloseall();
-	printf("%s\n", timeS());
-	printf("?");
-	scanf("%i", &e);
-	
-	;
+	fp1 = _sxb_fopen("filetest.bin","c");
+	_sxb_fwrite(na, sizeof(na), 10,fp1);
+	_sxb_fclose(fp1);
+	fp2 = _sxb_fopen("filetest.bin","r");
+	_sxb_fread(nb, sizeof(nb), 10,fp2);
+	_sxb_fclose(fp2);
+	for(i = 0; i <= 10 ;i++) {
+		printf("%d\n", nb[i]);
+	}
 };

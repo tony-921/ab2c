@@ -1,7 +1,8 @@
 /*
 	SX-BASIC	コンパイラ本体
 	Programmed By ISHIGAMI Tatsuya
-	08/26/95
+	08/26/1995	for SX-BASIC
+	01/20/2025	for X-Basic to C converter
 
 */
 
@@ -12,7 +13,6 @@
 
 #include	"sxbasic.h"
 
-
 char* TokenPtr;
 E_TYPE	casType;			/* swict文で使われた変数の型 */
 E_TYPE	retType;			/* 関数の戻り値のタイプ */
@@ -22,9 +22,6 @@ bool	inFunction;			/* 関数の中か */
 bool	isFirstFunc;		/* 最初の関数		*/
 int		brkLabel;
 int		contLabel;
-int		caseLabel;
-int		dfltLabel;
-
 
 extern	int		vali;
 extern	E_TYPE	lastType;
@@ -60,12 +57,12 @@ Compile(void)
 
 	if (isFirstFunc) {	/* 関数が一つもなかった時 */
 		if (p = SearchUndefLabel()) {
-			PutErrorE("Undefined label");
+			PutError("Undefined label");
 		}
 		PutCode("\n};");
 	}
 	if (inFunction) {
-		PutErrorE("Incomplete function");
+		PutError("Incomplete function");
 	}
 	return(TRUE);
 }
@@ -82,12 +79,9 @@ CompInit(void)
 	printf("pass 1\n");
 	Pass1();		/* Parse code to generate function table, labels (withoug generating code) */
 	printf("pass 2\n");
-	// Pass2();		/* FIXME - put code to arrange items */
-
 	rewind(inputFp);
 
-	dfltLabel = caseLabel =
-		isFirstFunc = TRUE;
+	isFirstFunc = TRUE;
 	inFunction = FALSE;
 	strStackPtr = strBuffer;
 	strBuffer[0] = '\0';
@@ -134,7 +128,7 @@ parseStatement(void)
 	ret = ParseRegularStatement();
 	if (ret) return TRUE;
 
-	ret = doSpecialStatement();
+	ret = ParseSpecialStatement();
 	if (ret)	return;
 
 	if (*TokenPtr == '{') {
@@ -166,16 +160,22 @@ parseStatement(void)
 
 
 int
-doSpecialStatement(void)
+ParseSpecialStatement(void)
 {
-	if (amatch("break"))		doBreak();
-	else if (amatch("beep")) {
-		PutCode("_sxb_beep(1);");
+	if (amatch("break")) {
+		doBreak();
 	}
-	else if (amatch("continue"))		doContinue();
-	else if (amatch("case"))	doCase();
+	else if (amatch("beep")) {
+		PutCode("putchar('\07');");
+	}
+	else if (amatch("continue")) {
+		doContinue();
+	}
+	else if (amatch("case")) {
+		doCase();
+	} 
 	else if (amatch("cls")) {
-		PutCode("_sxb_cls()");
+		PutCode("printf(\"\\033[2J\")");
 	} else if (amatch("default")) 			doDefault();
 	else if (amatch("endfunc"))		PutError("endfunc without func");
 	else if (amatch("endswitch"))PutError("endswitch without switch");
@@ -202,7 +202,9 @@ doSpecialStatement(void)
 		doTransStr(1);
 		PutCode("%s;", strpop());
 	}
-	else if (amatch("goto"))			doGoto();
+	else if (amatch("goto")) {
+		doGoto();
+	}
 	else if (amatch("if")) {
 		doIf();
 	}
@@ -241,7 +243,7 @@ doSpecialStatement(void)
 		doTransStr(0);
 		PutCode("%s;", strpop());
 	} else if (amatch("until")) {
-		PutErrorE("Missing \'repeat\'");
+		PutError("Missing \'repeat\'");
 	} else if (amatch("while")) {
 		doWhile();
 	} else if (amatch("?")) {
@@ -276,16 +278,16 @@ doLinput(void)
 		isGlobal = FALSE;
 	} else if (p = SearchGlo(TokenPtr)) {
 		isGlobal = TRUE;
-	} else {
-		PutError("未宣言の変数です");
 	}
-
-	if (p->type != ET_STR)	PutError("Invalid Variable Type");
-	// FIXME - Support variable string variable
-	if (p->dim != 1) PutError("Cannot use index variable here.");
-	TokenPtr += TokenLen(TokenPtr);
-	PutCode("scanf(\"\%s\", &%s);\n", "%s", p->name);
-
+	if (p == NULL) {
+		PutError("未宣言の変数です");
+	} else {
+		if (p->type != ET_STR)	PutError("Invalid Variable Type");
+		// FIXME - Support variable string variable
+		if (p->dim != 1) PutError("Cannot use index variable here.");
+		TokenPtr += TokenLen(TokenPtr);
+		PutCode("scanf(\"\%s\", &%s);\n", "%s", p->name);
+	}
 #ifdef FIXME
 	// FIXME - Support referencing an indexed array variable.
 	if (p->dim >= 2)	doIndex(p);
@@ -535,7 +537,7 @@ doPrint(void)
 	while (1) {
 		char* fmt = NULL;
 		if (IsEndOfLine() || *TokenPtr == ':' || *TokenPtr == '}') {
-			PutCode("_sxb_ltnl()\n");	/* 改行 */
+			PutCode("putchar('\\n');\n");
 			break;
 		}
 		expression();
@@ -1182,8 +1184,10 @@ doFunctionCall(void)
 
 	SkipSpace();
 	p = SearchFunc(TokenPtr);
-	if (p == NULL)
+	if (p == NULL) {
 		PutError("未宣言の関数です");
+		return;
+	}
 	TokenPtr += TokenLen(TokenPtr);
 	check("(");
 	strpush("%s(", p->name);
@@ -1211,10 +1215,12 @@ DEF_FUNCTIONS statementDefinitions[] = {
 	STATEMENT1("exit(", "exit(", ET_INT),
 	STATEMENT1("fclose(", "_sxb_fclose(", ET_INT),
 	STATEMENT0("fcloseall(", "_sxb_fcloseall("),
-	STATEMENT1("fdelete(", "_sxb_fdelete(", ET_INT),
+	STATEMENT1("fdelete(", "remove(", ET_STR),
 	STATEMENT2("fputc(", "_sxb_fputc(", ET_CHAR, ET_INT),
 	STATEMENT2("frename(", "_sxb_frename(", ET_STR, ET_STR),
 	STATEMENT3("fseek(",   "_sxb_fseek(", ET_INT, ET_INT, ET_INT),
+	STATEMENT2("fwrites(","_sxb_fwrites(", ET_STR, ET_INT),
+
 	STATEMENT1("randomize(", "_sxb_randomize(", ET_INT),
 	STATEMENT1("srand(", "_sxb_srand(", ET_INT),
 
