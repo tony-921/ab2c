@@ -45,7 +45,7 @@ Compile(void)
 	CompInit();
 	parseVariableDeclarations(TRUE);
 	PutCode("\n");
-	PutCode("void _sxb_start(void) {");
+	PutCode("void main(int b_argc, char *b_argv[]) {");
 	indent++;
 	do {
 		PutCode("\n");
@@ -125,7 +125,7 @@ parseStatement(void)
 	int		ret = FALSE;
 
 	SkipSpace();
-	ret = ParseRegularStatement();
+	ret = ParseRegularFunctions(FALSE, FALSE);
 	if (ret) return TRUE;
 
 	ret = ParseSpecialStatement();
@@ -180,7 +180,7 @@ ParseSpecialStatement(void)
 	else if (amatch("endfunc"))		PutError("endfunc without func");
 	else if (amatch("endswitch"))PutError("endswitch without switch");
 	else if (amatch("endwhile"))	PutError("endwhile without while");
-	else if (amatch("end"))		PutCode("_sxb_end();");
+	else if (amatch("end"))		PutCode("b_exit(0);");
 	else if (amatch("for")) {
 		doFor();
 	}
@@ -264,15 +264,8 @@ doLinput(void)
 	SYMTBL* p;
 	int	isGlobal;
 
+	doInput_Prompt();
 	SkipSpace();
-	expression();
-	if (lastType == ET_NONE) {
-		printf("FIXME - No prompt string");
-	} else {
-		ToStr1(lastType);
-		check(";");
-
-	}
 
 	if (p = SearchLoc(TokenPtr)) {
 		isGlobal = FALSE;
@@ -280,7 +273,7 @@ doLinput(void)
 		isGlobal = TRUE;
 	}
 	if (p == NULL) {
-		PutError("ñ¢êÈåæÇÃïœêîÇ≈Ç∑");
+		PutError("Undefined variable");
 	} else {
 		if (p->type != ET_STR)	PutError("Invalid Variable Type");
 		// FIXME - Support variable string variable
@@ -288,13 +281,6 @@ doLinput(void)
 		TokenPtr += TokenLen(TokenPtr);
 		PutCode("scanf(\"\%s\", &%s);\n", "%s", p->name);
 	}
-#ifdef FIXME
-	// FIXME - Support referencing an indexed array variable.
-	if (p->dim >= 2)	doIndex(p);
-
-	if (isGlobal)	PutArrayCode(0x9c, p);
-	else		PutArrayCode(0x9b, p);
-#endif
 }
 
 
@@ -384,7 +370,7 @@ doSubsutitute(int isGlobal, SYMTBL* p)
 		}
 		else if (amatch("(")) {
 			/* sub(0) = 1ÇÃÇÊÇ§Ç»å` */
-			DoIndexed(p);
+			doArrayIndex(p);
 			check("=");
 			expression();
 			q = strpop();
@@ -942,8 +928,7 @@ parseFunction(void)
 	InitLocTbl();
 
 	if (isFirstFunc) {
-		PutCode("_sxb_end();\n"
-			"}\n");
+		PutCode("b_exit(0);\n}\n");
 		isFirstFunc = FALSE;
 		indent = 0;
 	}
@@ -1166,10 +1151,11 @@ doLocate(void)
 		doCast(ET_INT);
 		p1 = strpop();
 		p2 = strpop();
-		PutCode("locate_3(%s,%s,%s)\n", strpop(), p2, p1);		// FIXME - check func with 3 params.
+		PutCode("locate(%s,%s);\n", strpop(), p2);
+		PutCode("b_csw(%s);\n", p1);
 	} else {
 		p1 = strpop();
-		PutCode("locate(%s,%s)\n", strpop(), p1);
+		PutCode("locate(%s,%s);\n", strpop(), p1);
 	}
 }
 
@@ -1206,52 +1192,4 @@ doFunctionCall(void)
 	if (paraCnt < p->pars) PutError("à¯êîÇ™è≠Ç»Ç∑Ç¨Ç‹Ç∑");
 
 	return(p);
-}
-
-// Regular statement Functions
-DEF_FUNCTIONS statementDefinitions[] = {
-
-	// regular functions
-	STATEMENT1("exit(", "exit(", ET_INT),
-	STATEMENT1("fclose(", "_sxb_fclose(", ET_INT),
-	STATEMENT0("fcloseall(", "_sxb_fcloseall("),
-	STATEMENT1("fdelete(", "remove(", ET_STR),
-	STATEMENT2("fputc(", "_sxb_fputc(", ET_CHAR, ET_INT),
-	STATEMENT2("frename(", "_sxb_frename(", ET_STR, ET_STR),
-	STATEMENT3("fseek(",   "_sxb_fseek(", ET_INT, ET_INT, ET_INT),
-	STATEMENT2("fwrites(","_sxb_fwrites(", ET_STR, ET_INT),
-
-	STATEMENT1("randomize(", "_sxb_randomize(", ET_INT),
-	STATEMENT1("srand(", "_sxb_srand(", ET_INT),
-
-	// music functions
-	STATEMENT2("m_alloc(", "m_alloc(", ET_INT, ET_INT),
-	STATEMENT2("m_assign(", "m_assign(", ET_INT, ET_INT),
-	STATEMENT0("m_cont(", "m_cont("),
-	STATEMENT0("m_init(", "m_init("),
-	STATEMENT0("m_play(", "m_play("),
-	STATEMENT0("m_stop(", "m_stop("),
-	STATEMENT1("m_sysch(", "m_sysch(", ET_STR),
-	STATEMENT2("m_trk(", "m_trk(", ET_INT, ET_STR),
-};
-
-int
-ParseRegularStatement(void) {
-	int	i;
-	int totalFunctions = sizeof(statementDefinitions) / sizeof(DEF_FUNCTIONS);
-	for (i = 0; i < totalFunctions; i++) {
-		DEF_FUNCTIONS* f = &statementDefinitions[i];
-		if (amatch(f->b_name)) {
-			strpush(f->c_name);
-			if (f->numParams == 0)		func0(ET_NONE);
-			if (f->numParams == 1) 		func1(ET_NONE, f->param1);
-			if (f->numParams == 2) 		func2(ET_NONE, f->param1, f->param2);
-			if (f->numParams == 3)		func3(ET_NONE, f->param1, f->param2, f->param3);
-			if (f->numParams > 3)		PutError("Internal Error ParseRegularStatement %s %d", f->b_name, f->numParams);
-
-			PutCode("%s;", strpop());
-			return TRUE;
-		}
-	}
-	return FALSE;
 }

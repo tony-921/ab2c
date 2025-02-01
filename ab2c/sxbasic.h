@@ -79,8 +79,7 @@ typedef struct deffunctions {
 #define	LOCAL_TABLE_SIZE	100
 #define FUNC_TABLE_SIZE		400
 #define	LABEL_TABLE_SIZE	10
-// FIXME - was 1000
-#define	STR_BUFFER_SIZE		10000
+#define	STR_BUFFER_SIZE		1000
 #define	STR_STACK_SIZE		20
 
 /*	EXP.C	*/
@@ -90,7 +89,7 @@ void	check(char* s);
 void	fcheck(char* s);
 void	factor(void);
 void	RefVariable(int isGlobal, SYMTBL* p);
-void	DoIndexed(SYMTBL* p);
+void	doArrayIndex(SYMTBL* p);
 void	expression1(void);
 E_TYPE	PickAlignedType(E_TYPE type1, E_TYPE type2);
 void	ToInt1(E_TYPE type);
@@ -168,7 +167,7 @@ void	doInput_Variable(SYMTBL* p, int isGlobal);
 void	doLocate(void);
 
 FNCTBL* doFunctionCall(void);
-int		ParseRegularStatement(void);
+// int		ParseRegularStatement(void);
 int		ParseSpecialStatement(void);
 void	doLinput(void);
 
@@ -206,5 +205,7 @@ void	func1(E_TYPE ret, E_TYPE p1);
 void	func2(E_TYPE ret, E_TYPE p1, E_TYPE p2);
 void	func3(E_TYPE ret , E_TYPE p1, E_TYPE p2, E_TYPE p3);
 void	doFread(void);
-int		ParseRegularFunctions(void);
-int		ParseSpecialFunctions(void);
+// int		ParseRegularFunctions(void);
+
+int		ParseRegularFunctions(bool forExpression, bool needReturnValue);
+

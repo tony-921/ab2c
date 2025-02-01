@@ -24,7 +24,7 @@ efuncs(void)
 
 	SkipSpace();
 
-	ret = ParseRegularFunctions();
+	ret = ParseRegularFunctions(TRUE, TRUE);
 	if (ret) return TRUE;
 
 	ret = ParseSpecialFunctions();
@@ -115,6 +115,8 @@ DEF_FUNC1("cos(",  "cos(",		ET_FLOAT, ET_FLOAT),
 DEF_FUNC1("dskf(",	"dskf(",	ET_INT, ET_CHAR),
 // DEF_FUNC0("date$",	"dateS()",	ET_STR),
 // DEF_FUNC0("days$",	"days()",	ET_STR),
+STATEMENT1("exit(", "b_exit(", ET_INT),
+
 DEF_FUNC1("exp(",	"exp(",		ET_FLOAT, ET_FLOAT),
 
 DEF_FUNC1("fix(",	"fix(",	ET_FLOAT, ET_FLOAT),
@@ -157,23 +159,25 @@ DEF_FUNC1("len(", "len(", ET_INT, ET_STR),
 DEF_FUNC1("log(", "log(", ET_FLOAT, ET_FLOAT),
 DEF_FUNC2("left$(", "left$(", ET_STR, ET_STR, ET_INT),
 
-DEF_FUNC3("mid$(", "_sxb_mid(", ET_STR, ET_STR, ET_INT, ET_INT),
-DEF_FUNC1("mirror$(", "_sxb_mirror(", ET_STR, ET_STR),
+DEF_FUNC3("mid$(", "_sxb_midS(", ET_STR, ET_STR, ET_INT, ET_INT),
+DEF_FUNC1("mirror$(", "_sxb_mirrorS(", ET_STR, ET_STR),
 DEF_FUNC1("mouse(", "mouse(", ET_CHAR, ET_INT),
 
-DEF_FUNC1("oct$(", "_sxb_oct(", ET_STR, ET_INT),
+DEF_FUNC1("oct$(", "_sxb_octS(", ET_STR, ET_INT),
 DEF_FUNC2("pow(", "pow(", ET_FLOAT, ET_FLOAT, ET_FLOAT),
 
 DEF_FUNC0("rnd(", "rnd(", ET_FLOAT),
 DEF_FUNC0("rand(", "rand(", ET_INT),
 DEF_FUNC2("right$(", "_sxb_rightS(", ET_STR, ET_STR, ET_INT),
+STATEMENT1("randomize(", "randomize(", ET_INT),
 
-//
+
 DEF_FUNC1("str$(", "_sxb_str(", ET_STR, ET_FLOAT),
 DEF_FUNC1("sgn(", "sgn(", ET_FLOAT, ET_FLOAT),
 DEF_FUNC1("sin(", "sin(",ET_FLOAT, ET_FLOAT),
 DEF_FUNC1("sqr(", "sqr(", ET_FLOAT, ET_FLOAT),
 DEF_FUNC1("space$(", "_sxb_spaceS(", ET_STR, ET_INT),
+STATEMENT1("srand(", "srand(", ET_INT),
 DEF_FUNC2("strchr(", "strchr(", ET_INT, ET_STR, ET_CHAR),
 DEF_FUNC2("strcspn(", "strcspn(", ET_INT, ET_STR, ET_STR),
 DEF_FUNC2("string$(", "_sxb_stringS(", ET_STR, ET_INT, ET_STR),
@@ -187,23 +191,49 @@ DEF_FUNC1("tolower(", "tolower(", ET_INT, ET_CHAR),
 DEF_FUNC1("toupper(", "toupper(", ET_INT, ET_CHAR),
 DEF_FUNC1("tan(", "tan(", ET_FLOAT, ET_FLOAT),
 
-DEF_FUNC1("val(", "val(", ET_FLOAT, ET_STR)
+DEF_FUNC1("val(", "val(", ET_FLOAT, ET_STR),
+
+// music functions
+DEF_FUNC2("m_alloc(", "m_alloc(", ET_INT, ET_CHAR, ET_INT),
+DEF_FUNC2("m_assign(", "m_assign(", ET_INT, ET_CHAR, ET_CHAR),
+DEF_FUNC0("m_cont(", "m_cont(", ET_INT),		// FIXME : Shall take variable number of parameters.
+DEF_FUNC1("m_free(", "m_free(", ET_INT, ET_CHAR),
+STATEMENT0("m_init(", "m_init("),
+DEF_FUNC0("m_play(", "m_play(", ET_INT),		// FIXME : Shall take variable number of paramters.
+DEF_FUNC1("m_stat(", "m_stat(", ET_INT, ET_INT),
+DEF_FUNC0("m_stop(", "m_stop(", ET_INT),		// FIXME : Shall take variable number of paramters.
+DEF_FUNC1("m_sysch(", "m_sysch(", ET_INT, ET_STR),
+DEF_FUNC1("m_tempo(", "m_trk(", ET_INT, ET_CHAR),
+DEF_FUNC2("m_trk(", "m_trk(", ET_INT, ET_INT, ET_STR),
+
 };
 
 
 int
-ParseRegularFunctions(void) {
+ParseRegularFunctions(bool forExpression, bool needReturnValue) {
 	int	i;
 	int totalFunctions = sizeof(funcDefinitions) / sizeof(DEF_FUNCTIONS);
 	for (i = 0; i < totalFunctions; i++) {
 		DEF_FUNCTIONS* f = &funcDefinitions[i];
+		if (f->retType == ET_NONE) {
+			if (forExpression) {
+				continue;
+			}
+			if (needReturnValue) {
+				PutError("A function/statement cannot be used inside the expression.");
+			}
+		}
 		if (amatch(f->b_name)) {
 			strpush(f->c_name);
 			if (f->numParams == 0) 	func0(f->retType);
 			if (f->numParams == 1) 	func1(f->retType, f->param1);
 			if (f->numParams == 2) 	func2(f->retType, f->param1, f->param2);
 			if (f->numParams == 3)	func3(f->retType, f->param1, f->param2, f->param3);
-			if (f->numParams > 3)	PutError("Internal Error func_external %s %d", f->b_name, f->numParams);
+			if (f->numParams > 3)	PutError("Internal Error ParseRegularFunctions %s %d", f->b_name, f->numParams);
+
+			if (forExpression == FALSE) {
+				PutCode("%s;", strpop());
+			}
 			return TRUE;
 		}
 	}
@@ -271,7 +301,7 @@ doTransStr(int exps)
 
 	if (p->dim >= 2) {
 		check("(");
-		DoIndexed(p);
+		doArrayIndex(p);
 	}
 
 	while (exps--) {

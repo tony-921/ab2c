@@ -1,9 +1,10 @@
   100 /* music sample "おお、スザンナ!!" S.C.Foster
   110 int ai
+  105 int ret
   120 str as,bs,cs,s1[50]                /*文字変数の宣言
   130 s1=" 音色変更[H] 演奏[P] 停止[S] 再開[C] 終了=[E] :"
   140 m_init() /*FM音源の初期化
-  150 m_sysch("OPM") /*音源のチャンネル番号の割当
+  150 ret = m_sysch("OPM") /*音源のチャンネル番号の割当
   160 cls
   170 M_CHANGE(): MML_IN():m_play()
   180 repeat

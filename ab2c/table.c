@@ -316,6 +316,7 @@ Pass1(void)
 {
 	PutCode("#include\t<stdio.h>\n");
 	PutCode("#include\t<string.h>\n");
+	PutCode("#include\t<basic0.h>\n");
 	PutCode("#include\t\"ab2c_run.h\"\n");
 
 	rewind(inputFp);

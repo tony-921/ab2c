@@ -30,9 +30,6 @@ extern	int		indent;
 
 volatile void
 PutError(char* fmt, ...) {
-	// FIXME :
-	// place holder for the original Japanese string, which
-	// doesn't display on Windows.
 	char* p;
 	va_list	marker;
 
@@ -160,7 +157,7 @@ RefVariable(int isGlobal, SYMTBL* p)
 	}
 	else if (amatch("(")) {
 		/* array variable */
-		DoIndexed(p);
+		doArrayIndex(p);
 		lastType = p->type;
 		if (p->type == ET_STR && amatch("[")) {
 			expression();
@@ -177,7 +174,7 @@ RefVariable(int isGlobal, SYMTBL* p)
 ** (a1,a2,a3)‚Ìˆ—
 */
 void
-DoIndexed(SYMTBL* p)
+doArrayIndex(SYMTBL* p)
 {
 	int	dim = p->dim;
 

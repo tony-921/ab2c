@@ -18,7 +18,9 @@ bool	toSkipLineNumber = TRUE;
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\music_sample\\music_sample"
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\func_test"
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\state_test"
-#define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\file_test2"
+// #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\file_test2"
+// #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\strcmp_test"
+#define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\sfunc"
 
 void
 main(int argc, char *argv[])
