@@ -20,7 +20,9 @@ bool	toSkipLineNumber = TRUE;
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\state_test"
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\file_test2"
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\strcmp_test"
-#define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\sfunc"
+// #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\sfunc"
+// #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\array_test"
+#define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\img_test"
 
 void
 main(int argc, char *argv[])

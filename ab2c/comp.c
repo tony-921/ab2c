@@ -620,7 +620,12 @@ doReturn(void)
 	else {
 		expression();
 		doCast(retType);
-		PutCode("return %s;\n", strpop());
+		if (retType == ET_STR) {
+			PutCode("strncpy(_str_buff, %s, sizeof(_str_buff));\n", strpop());
+			PutCode("return &_str_buff;");
+		} else {
+			PutCode("return %s;\n", strpop());
+		}
 	}
 }
 
@@ -957,6 +962,9 @@ parseFunction(void)
 	DoParam(p);
 
 	PutCode("{\n");
+	if (p->retType == ET_STR) {
+		PutCode("static char _str_buff[TEMP_STR_BUFF_SIZE];\n");
+	}
 	parseVariableDeclarations(FALSE);
 	LoopStatement("endfunc");
 	PutCode("}\n");
