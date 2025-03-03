@@ -8,7 +8,6 @@
 #include	<setjmp.h>
 #include	"sxbasic.h"
 
-
 FILE	*inputFp, *outputFp;
 E_TYPE	lastType;
 
@@ -22,7 +21,8 @@ bool	toSkipLineNumber = TRUE;
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\strcmp_test"
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\sfunc"
 // #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\array_test"
-#define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\img_test"
+// #define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\img_test"
+#define TEST_FILE	"C:\\Users\\tatsu\\source\\repos\\ab2c\\tests\\linput_test"
 
 void
 main(int argc, char *argv[])

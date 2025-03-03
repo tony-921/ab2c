@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 # Converted c code
 tests/*.c
+
+from_x68000/*

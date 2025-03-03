@@ -17,7 +17,7 @@
 typedef	char	bool;
 #define	LABEL_LEN	30
 
-// Expression Type
+/* Expression Type */
 typedef	enum {
 	ET_NONE,
 	ET_CHAR,
@@ -31,8 +31,8 @@ typedef	enum {
 typedef	struct	symtbl {
 	char	name[LABEL_LEN];
 	E_TYPE	type;
-	int	dim;		/* 変数の次元		*/
-	int	size[4];	/* 配列は３次元まで (1-origin, max=4 */
+	int	dim;		/* array dimention	*/
+	int	size[4];	/* up to 3 dim (1-origin, max=4 */
 } SYMTBL;
 
 /* Table record for functions */
@@ -161,11 +161,11 @@ void	doLabelDefinition(void);
 void	GetString(char*);
 void	doGoto(void);
 void	doInput(void);
+int		doInput_Prompt(void);
 void	doInput_Variable(SYMTBL* p, int isGlobal);
 void	doLocate(void);
 
 FNCTBL* doFunctionCall(void);
-// int		ParseRegularStatement(void);
 int		ParseSpecialStatement(void);
 void	doLinput(void);
 
@@ -192,9 +192,9 @@ void	PrintFunctionPrototype(void);
 void	PredecFunc(void);
 void	SkipLineNumber(void);
 
-/*	EFUNC.C		*/
+/*	functions.C		*/
 int		efuncs(void);
-
+int		ParseSpecialFunctions(void);
 void	doEcvt(void);
 void	doTransStr(int);
 void	doTransStrFunc(int);
@@ -206,7 +206,6 @@ void	func4(E_TYPE ret, E_TYPE p1, E_TYPE p2, E_TYPE p3, E_TYPE p4);
 void	func5(E_TYPE ret, E_TYPE p1, E_TYPE p2, E_TYPE p3, E_TYPE p4, E_TYPE p5);
 void	func6(E_TYPE ret, E_TYPE p1, E_TYPE p2, E_TYPE p3, E_TYPE p4, E_TYPE p5, E_TYPE p6);
 void	doFread(void);
-// int		ParseRegularFunctions(void);
 
 int		ParseRegularFunctions(bool forExpression, bool needReturnValue);
 

@@ -126,10 +126,10 @@ parseStatement(void)
 
 	SkipSpace();
 	ret = ParseRegularFunctions(FALSE, FALSE);
-	if (ret) return TRUE;
+	if (ret) return;
 
 	ret = ParseSpecialStatement();
-	if (ret)	return;
+	if (ret) return;
 
 	if (*TokenPtr == '{') {
 		TokenPtr++;
@@ -276,10 +276,10 @@ doLinput(void)
 		PutError("Undefined variable");
 	} else {
 		if (p->type != ET_STR)	PutError("Invalid Variable Type");
-		// FIXME - Support variable string variable
+		/* FIXME - Support variable string variable */
 		if (p->dim != 1) PutError("Cannot use index variable here.");
 		TokenPtr += TokenLen(TokenPtr);
-		PutCode("scanf(\"\%s\", &%s);\n", "%s", p->name);
+		PutCode("scanf(\"%%s\", &%s);\n", p->name);
 	}
 }
 
@@ -539,9 +539,12 @@ doPrint(void)
 			fmt = "%%f";
 			break;
 		case ET_STR:
-			// do NOT optimize printf("%s", "str") -> printf("str")
-			// as the 'str' may contains escape characters.
+			/* do NOT optimize printf("%s", "str") -> printf("str")
+			   as the 'str' may contains escape characters. */
 			fmt = "%%s";
+			break;
+		default:
+			/* nothing to do with NONE and VOID */
 			break;
 		}
 		if (fmt == NULL) {
@@ -1050,7 +1053,6 @@ doInput(void)
 {
 	SYMTBL* p;
 	int	isGlobal = FALSE;
-	int	dim;
 
 	doInput_Prompt();
 	SkipSpace();
@@ -1075,14 +1077,12 @@ doInput_Prompt(void)
 	char buff[MAX_BUFF_SIZE] = "\0";
 	char s[MAX_BUFF_SIZE] = "\0";
 
-	int	isGlobal = FALSE;
-
 	SkipSpace();
 
 	possiblePrompt = TokenPtr;
 	expression();
 
-	// input <prompt>;<var>
+	/* input <prompt>;<var> */
 	if (amatch(",") || amatch(";")) {
 		ToStr1(lastType);
 		strncpy(buff, strpop(), sizeof(buff));
@@ -1090,8 +1090,8 @@ doInput_Prompt(void)
 		PutCode(s);
 		return(TRUE);
 	}
-	// input <var> (without prompt)
-	// Get rid of previous expr parse.
+	/* input <var> (without prompt) */
+	/* Get rid of previous expr parse. */
 	strpop();
 	TokenPtr = possiblePrompt;
 
@@ -1105,9 +1105,7 @@ doInput_Variable(SYMTBL * p, int isGlobal)
 {
 	int	dim = p->dim;
 	int type = p->type;
-	char* fmt;
-	char buff[MAX_BUFF_SIZE] = "\0";
-	char s[MAX_BUFF_SIZE] = "\0";
+	char* fmt = "";
 
 	if (type == ET_STR)  dim--;
 	if (p->type == ET_CHAR) {
@@ -1141,7 +1139,7 @@ doGoto(void)
 	TokenPtr += TokenLen(TokenPtr);
 }
 
-// A special statement without parenthess and optional parameter
+/* A special statement without parenthess and optional parameter */
 void
 doLocate(void)
 {
@@ -1180,7 +1178,7 @@ doFunctionCall(void)
 	p = SearchFunc(TokenPtr);
 	if (p == NULL) {
 		PutError("ñ¢êÈåæÇÃä÷êîÇ≈Ç∑");
-		return;
+		return NULL;
 	}
 	TokenPtr += TokenLen(TokenPtr);
 	check("(");

@@ -47,8 +47,10 @@ ParseSpecialFunctions(void)
 		lastType = ET_STR;
 	} else if (pamatch("ecvt(")) {
 		doEcvt();
+		lastType = ET_STR;
 	} else if (pamatch("fcvt(")) {
 		doEcvt();
+		lastType = ET_STR;
 	}
 	else if (amatch("fread(")) {
 		strpush("_sxb_fread(");
@@ -97,8 +99,7 @@ ParseSpecialFunctions(void)
 
 
 
-
-// regular functions
+/* regular functions */
 DEF_FUNCTIONS funcDefinitions[] = {
 
 DEF_FUNC1("abs(", "abs(",			ET_FLOAT, ET_FLOAT),
@@ -113,18 +114,18 @@ DEF_FUNC1("chr$(", "_sxb_chrS(",	ET_STR, ET_INT),
 DEF_FUNC1("cos(",  "cos(",			ET_FLOAT, ET_FLOAT),
 
 DEF_FUNC1("dskf(",	"dskf(",		ET_INT, ET_CHAR),
-// DEF_FUNC0("date$",	"dateS()",	ET_STR),
-// DEF_FUNC0("days$",	"days()",	ET_STR),
+/* DEF_FUNC0("date$",	"dateS()",	ET_STR), */
+/* DEF_FUNC0("days$",	"days()",	ET_STR), */
 DEF_FUNC1("exit(", "b_exit(",		ET_NONE, ET_INT),
 
 DEF_FUNC1("exp(",	"exp(",			ET_FLOAT, ET_FLOAT),
 
 DEF_FUNC1("fix(",	"fix(",			ET_FLOAT, ET_FLOAT),
-//		DEF_FUNC1("fcvt(")) doEcvt();
+/*		DEF_FUNC1("fcvt(")) doEcvt(); */
 DEF_FUNC1("fclose(", "fclose(", 	ET_INT, ET_INT),
 DEF_FUNC0("fcloseall(", "flocseall(", ET_INT),
 
-//	'fread', 'fwrie' and 'freads' have the designated functions
+/*	'fread', 'fwrite' and 'freads' have the designated functions */
 DEF_FUNC1("fdelete(", "remove(",	ET_INT, ET_STR),
 DEF_FUNC1("feof(", "feof(", 		ET_INT, ET_INT),
 DEF_FUNC1("fgetc(", "_sxb_fgetc(",	ET_INT, ET_INT),
@@ -138,7 +139,7 @@ DEF_FUNC2("gcvt(", "gcvt(", 		ET_STR, ET_FLOAT, ET_INT),
 
 DEF_FUNC1("hex$(", "_sxb_hexS(", 	ET_STR, ET_INT),
 
-// inkey$
+/* inkey$ */
 DEF_FUNC1("int(", "int(", 			ET_INT, ET_FLOAT),
 DEF_FUNC1("itoa(", "itoa(", 		ET_STR, ET_INT),
 DEF_FUNC3("instr(", "instr(",		ET_INT, ET_INT, ET_STR, ET_STR),
@@ -192,29 +193,29 @@ DEF_FUNC1("tan(", "tan(",			ET_FLOAT, ET_FLOAT),
 
 DEF_FUNC1("val(", "val(", ET_FLOAT, ET_STR),
 
-// image functions
+/* image functions */
 DEF_FUNC1("img_color(", "img_color(",	ET_NONE, ET_CHAR),
 DEF_FUNC5("img_home(",	"img_home(",	ET_NONE, ET_INT, ET_INT, ET_CHAR, ET_INT, ET_INT),
 DEF_FUNC6("img_ht(",	"img_ht(",		ET_NONE, ET_INT, ET_INT, ET_INT, ET_INT, ET_CHAR, ET_CHAR),
-DEF_FUNC1("img_load(",	"img_load(",	ET_INT, ET_STR),				// FXIME: 2nd, 3rd, 4th parameters optional
+DEF_FUNC1("img_load(",	"img_load(",	ET_INT, ET_STR),				/* FXIME: 2nd, 3rd, 4th parameters optional */
 DEF_FUNC1("img_pos(",	"img_pos(",		ET_NONE, ET_CHAR),
-// DEF_FUNC2("img_put(",	"img_put(",	ET_INT, ET_CHAR, ET_INT),		// FIXME: array at 5th parameter
-DEF_FUNC1("img_save(",	"img_save(",	ET_INT, ET_STR),				// FIXME: 2nd, 3rd parameters optional
+/* DEF_FUNC2("img_put(",	"img_put(",	ET_INT, ET_CHAR, ET_INT),		// FIXME: array at 5th parameter */
+DEF_FUNC1("img_save(",	"img_save(",	ET_INT, ET_STR),				/* FIXME: 2nd, 3rd parameters optional */
 DEF_FUNC3("img_scrn(",	"img_scrn(",	ET_INT, ET_INT, ET_INT, ET_INT),
-// DEF_FUNC2("img_set(",	"img_set(",	ET_INT, ET_CHAR, ET_INT),
+/* DEF_FUNC2("img_set(",	"img_set(",	ET_INT, ET_CHAR, ET_INT), */
 DEF_FUNC1("img_still(", "img_still(",	ET_NONE, ET_INT),
 DEF_FUNC1("v_cut(",		"v_cut(",		ET_NONE, ET_CHAR),
 
 
-// music functions
+/* music functions */
 DEF_FUNC2("m_alloc(", "m_alloc(", ET_INT, ET_CHAR, ET_INT),
 DEF_FUNC2("m_assign(", "m_assign(", ET_INT, ET_CHAR, ET_CHAR),
-DEF_FUNC0("m_cont(", "m_cont(", 	ET_INT),		// FIXME : Shall take variable number of parameters.
+DEF_FUNC0("m_cont(", "m_cont(", 	ET_INT),		/* FIXME : Shall take variable number of parameters. */
 DEF_FUNC1("m_free(", "m_free(", 	ET_INT, ET_CHAR),
 DEF_FUNC0("m_init(", "m_init(",		ET_NONE),
-DEF_FUNC0("m_play(", "m_play(", 	ET_INT),		// FIXME : Shall take variable number of paramters.
+DEF_FUNC0("m_play(", "m_play(", 	ET_INT),		/* FIXME : Shall take variable number of paramters. */
 DEF_FUNC1("m_stat(", "m_stat(",		ET_INT, ET_INT),
-DEF_FUNC0("m_stop(", "m_stop(",		ET_INT),		// FIXME : Shall take variable number of paramters.
+DEF_FUNC0("m_stop(", "m_stop(",		ET_INT),		/* FIXME : Shall take variable number of paramters. */
 DEF_FUNC1("m_sysch(", "m_sysch(",	ET_INT, ET_STR),
 DEF_FUNC1("m_tempo(", "m_trk(",		ET_INT, ET_CHAR),
 DEF_FUNC2("m_trk(", "m_trk(",		ET_INT, ET_INT, ET_STR),
@@ -261,7 +262,7 @@ ParseRegularFunctions(bool forExpression, bool needReturnValue) {
 ** ecvt(), fcvt()ÇÃèàóù
 */
 void
-doEcvt(void)
+doEcvt()
 {
 	int	i;
 	SYMTBL* p[2];
@@ -276,8 +277,8 @@ doEcvt(void)
 	for (i = 0; i < 2; i++) {
 		check(",");
 		SkipSpace();
-		if (p[i] = SearchLoc(TokenPtr)); 
-		else if (p[i] = SearchGlo(TokenPtr));
+		if ((p[i] = SearchLoc(TokenPtr))); 
+		else if ((p[i] = SearchGlo(TokenPtr)));
 		else
 			PutError("ñ¢êÈåæÇÃïœêîÇ≈Ç∑ !!");
 
@@ -288,7 +289,7 @@ doEcvt(void)
 	check(")");
 	q1 = strpop();
 	q2 = strpop();
-	strpush("%s%s, %s, \&%s, \&%s)", strpop(), q2, q1, p[0]->name, p[1]->name);
+	strpush("%s%s, %s, &%s, &%s)", strpop(), q2, q1, p[0]->name, p[1]->name);
 	lastType = ET_STR;
 }
 
@@ -302,10 +303,10 @@ doTransStr(int exps)
 	int		isGlobal;
 
 	SkipSpace();
-	if (p = SearchLoc(TokenPtr)) {
+	if ((p = SearchLoc(TokenPtr))) {
 		isGlobal = FALSE;
 	}
-	else if (p = SearchGlo(TokenPtr)) {
+	else if ((p = SearchGlo(TokenPtr))) {
 		isGlobal = TRUE;
 	}
 	else PutError("ñ¢êÈåæÇÃïœêîÇ≈Ç∑");
@@ -483,8 +484,8 @@ doFread(void)
 	SYMTBL* p;
 	char* q;
 
-	if (p = SearchLoc(TokenPtr));
-	else if (p = SearchGlo(TokenPtr));
+	if ((p = SearchLoc(TokenPtr)));
+	else if ((p = SearchGlo(TokenPtr)));
 	else
 		PutError("ñ¢êÈåæÇÃïœêîÇ≈Ç∑");
 

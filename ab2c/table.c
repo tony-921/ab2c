@@ -13,8 +13,6 @@
 
 #include	"sxbasic.h"
 
-// void	PutFunctionName(char* name, char* event, char* index);
-
 extern	FILE* outputFp;
 extern	bool	toSkipLineNumber;
 
@@ -28,7 +26,7 @@ int			locSymPtr;
 int			fncSymCnt;
 int			lblSymPtr;
 
-char*   ungetBuffer = NULL;		// unget for getNextLine()
+char*   ungetBuffer = NULL;		/* unget for getNextLine() */
 char	prgBuff[1000];	/* Read Buff for Input */
 char	preBuff[1000];	/* Write Buffer for pre-output */
 char* TokenPtr;
